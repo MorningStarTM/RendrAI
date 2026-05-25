@@ -13,6 +13,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import logging
 from typing import Any, Dict, Optional
+from backend.logger import logger
 
 log = logging.getLogger("ImageProvider")
     
@@ -62,5 +63,5 @@ class ImageProvider(ABC):
         Generate images for multiple prompts.
         Default: sequential calls. Override for native batch APIs.
         """
-        log.info(f"Generating {len(prompts)} images via sequential calls")
+        logger.info(f"Generating {len(prompts)} images via sequential calls")
         return [self.generate_image(p, options) for p in prompts]

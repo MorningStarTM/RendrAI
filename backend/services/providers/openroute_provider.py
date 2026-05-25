@@ -21,9 +21,9 @@ from typing import Any, Dict, Optional
 import requests
 
 from backend.services.providers.model_provider import ModelProvider
+from backend.logger import logger
 
 
-log = logging.getLogger("openrouter_provider")
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -45,7 +45,7 @@ class OpenRouterProvider(ModelProvider):
 
     def __init__(
         self,
-        model_id:    str   = "anthropic/claude-haiku-3",
+        model_id:    str   = "nvidia/nemotron-3-super-120b-a12b:free",
         api_key:     Optional[str] = None,
         max_tokens:  int   = 1024,
         temperature: float = 0.3,
@@ -55,7 +55,7 @@ class OpenRouterProvider(ModelProvider):
         self.max_tokens  = max_tokens
         self.temperature = temperature
         self.api_key     = api_key or os.environ["OPENROUTER_API_KEY"]
-        log.info(f"OpenRouterProvider initialised  model={model_id}")
+        logger.info(f"OpenRouterProvider initialised  model={model_id}")
 
     # ── ModelProvider interface ───────────────────────────────────────────────
 
@@ -91,7 +91,7 @@ class OpenRouterProvider(ModelProvider):
             return resp.json()["choices"][0]["message"]["content"]
 
         except requests.RequestException as exc:
-            log.error(f"OpenRouterProvider.generate failed: {exc}")
+            logger.error(f"OpenRouterProvider.generate failed: {exc}")
             raise
 
     def health_check(self) -> bool:
@@ -99,5 +99,5 @@ class OpenRouterProvider(ModelProvider):
             self.generate("ping", options={"max_tokens": 5})
             return True
         except Exception as exc:
-            log.warning(f"OpenRouterProvider health_check failed: {exc}")
+            logger.warning(f"OpenRouterProvider health_check failed: {exc}")
             return False

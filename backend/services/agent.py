@@ -24,9 +24,11 @@ from __future__ import annotations
 
 import logging
 from typing import Any, TypedDict
+from pathlib import Path
 
 from langgraph.graph import END, StateGraph
 
+from services.providers.openroute_provider import OpenRouterProvider
 from services.brief_manager import BriefManager
 from services.slm_validator import SLMClient
 from services.reasoning_model import ReasoningClient
@@ -34,6 +36,9 @@ from services.image_api import ImageClient
 from services.storage import StorageClient
 
 log = logging.getLogger("Agent")
+
+
+DESKTOP = Path.home() / "Desktop" / "rendr_ai_output"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -206,6 +211,63 @@ def node_store(
 
     return state
 
+def node_image_gen_local(
+    state:  BriefState,
+    bm:     BriefManager,
+    client: ImageClient,
+) -> BriefState:
+    """
+    DEV ONLY — generates images and saves them directly to Mac Desktop.
+    Skips S3 / MinIO entirely.
+ 
+    Output folder:
+        ~/Desktop/rendr_ai_output/{chat_id}/
+            prompt_0.png
+            prompt_1.png
+            ...
+    """
+    chat_id = state["chat_id"]
+    log.info("[image_gen_local] chat_id=%s", chat_id)
+ 
+    try:
+        context = bm.get_image_gen_context(chat_id)
+        prompts = context["prompts"]
+ 
+        # Create output folder: ~/Desktop/rendr_ai_output/{chat_id}/
+        output_dir = DESKTOP / chat_id
+        output_dir.mkdir(parents=True, exist_ok=True)
+        log.info("[image_gen_local] saving to %s", output_dir)
+ 
+        images = []
+        for idx, prompt in enumerate(prompts):
+            log.info("[image_gen_local] generating %d/%d", idx + 1, len(prompts))
+ 
+            result = client.generate(
+                prompt=prompt,
+                metadata={"chat_id": chat_id, "prompt_index": idx},
+            )
+ 
+            # Save to Desktop
+            file_path = output_dir / f"prompt_{idx}.png"
+            file_path.write_bytes(result["image_data"])
+            log.info("[image_gen_local] saved → %s", file_path)
+ 
+            images.append({
+                "prompt_index": idx,
+                "prompt":       prompt,
+                "image_url":    "",                  # no S3 in dev
+                "s3_key":       "",                  # no S3 in dev
+                "local_path":   str(file_path),      # dev-only field
+            })
+ 
+        bm.store_images(chat_id, images)
+        log.info("[image_gen_local] done  images=%d  folder=%s", len(images), output_dir)
+ 
+    except Exception as exc:
+        log.error("[image_gen_local] failed: %s", exc)
+        return {**state, "error": str(exc)}
+ 
+    return state
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Conditional edge
@@ -248,7 +310,7 @@ def build_graph(
     """
 
     # Instantiate clients — each will call its respective LLM API
-    slm       = SLMClient()
+    slm       = SLMClient(provider=OpenRouterProvider())  # ← inject provider here
     reasoning = ReasoningClient()
     image     = ImageClient()
     storage   = StorageClient()
@@ -283,4 +345,41 @@ def build_graph(
     g.add_edge("image_gen", "store")
     g.add_edge("store",     END)
 
+    return g.compile()
+
+
+
+
+
+def build_dev_graph(
+    bm:         BriefManager,
+    raw_input:  str,
+    input_type: str = "auto",
+):
+    """
+    Same graph as production but saves images to Desktop, not S3.
+    node_store is intentionally excluded — no DB, no S3 in dev.
+    """
+    slm       = SLMClient(provider=OpenRouterProvider())
+    reasoning = ReasoningClient()
+    image     = ImageClient()
+ 
+    def _parse(state):  return node_parse_input(state, bm, raw_input, input_type)
+    def _slm(state):    return node_slm_validate(state, bm, slm)
+    def _reason(state): return node_reasoning(state, bm, reasoning)
+    def _imggen(state): return node_image_gen_local(state, bm, image)
+ 
+    g = StateGraph(BriefState)
+ 
+    g.add_node("parse_input",  _parse)
+    g.add_node("slm_validate", _slm)
+    g.add_node("reasoning",    _reason)
+    g.add_node("image_gen",    _imggen)
+ 
+    g.set_entry_point("parse_input")
+    g.add_edge("parse_input",  "slm_validate")
+    g.add_conditional_edges("slm_validate", route_after_slm, {"reasoning": "reasoning", END: END})
+    g.add_edge("reasoning",    "image_gen")
+    g.add_edge("image_gen",    END)          # ← was: END via "store" which didn't exist
+ 
     return g.compile()

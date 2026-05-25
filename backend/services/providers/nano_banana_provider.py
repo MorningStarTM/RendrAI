@@ -25,10 +25,10 @@ import os
 from typing import Any, Dict, List, Literal, Optional
 from venv import logger
 
+from backend.logger import logger
 from backend.services.providers.image_provider import ImageProvider
 
 
-log = logging.getLogger("ImageProvider")
 
 # ── Model constants ────────────────────────────────────────────────────────────
 NANO_BANANA_2   = "gemini-3.1-flash-image-preview"   # fast, high-volume
@@ -82,7 +82,7 @@ class NanoBananaProvider(ImageProvider):
         self.thinking_level = thinking_level
         self._api_key       = api_key or os.environ["GEMINI_API_KEY"]
 
-        log.info(
+        logger.info(
             f"NanoBananaProvider initialised  model={model}  "
             f"aspect_ratio={aspect_ratio}  image_size={image_size}"
         )
@@ -154,7 +154,7 @@ class NanoBananaProvider(ImageProvider):
                 include_thoughts=False,   # skip interim thought images in response
             )
 
-        log.info(
+        logger.info(
             f"NanoBananaProvider.generate_image  model={self.model}  "
             f"aspect_ratio={aspect_ratio}  image_size={image_size}  "
             f"thinking={thinking_level}  prompt_len={len(full_prompt)}"
@@ -170,7 +170,7 @@ class NanoBananaProvider(ImageProvider):
 
         image_data = self._extract_image_bytes(response)
 
-        log.info(
+        logger.info(
             f"NanoBananaProvider: image generated  bytes={len(image_data)}"
         )
 
@@ -196,7 +196,7 @@ class NanoBananaProvider(ImageProvider):
         For very large batches (50+) consider using the Gemini Batch API instead.
         See: https://ai.google.dev/gemini-api/docs/batch-api
         """
-        log.info(f"NanoBananaProvider.generate_batch  count={len(prompts)}")
+        logger.info(f"NanoBananaProvider.generate_batch  count={len(prompts)}")
         return [self.generate_image(p, options) for p in prompts]
 
     def health_check(self) -> bool:
@@ -208,7 +208,7 @@ class NanoBananaProvider(ImageProvider):
             )
             return bool(result.get("image_data"))
         except Exception as exc:
-            log.warning(f"NanoBananaProvider.health_check failed: {exc}")
+            logger.warning(f"NanoBananaProvider.health_check failed: {exc}")
             return False
 
     # ── Internal helpers ──────────────────────────────────────────────────────
@@ -228,7 +228,8 @@ class NanoBananaProvider(ImageProvider):
             if part.inline_data is not None:
                 return part.inline_data.data
 
-        raise ValueError(
+        logger.error(
             "Nano Banana response contained no image data. "
             f"Parts received: {[type(p).__name__ for p in response.parts]}"
         )
+        raise ValueError("No image data found in response.")

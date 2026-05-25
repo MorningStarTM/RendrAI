@@ -10,6 +10,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import logging
 from typing import Any, Dict, List, Optional
+from backend.logger import logger
 
 log = logging.getLogger("ModelProvider")
     
@@ -52,10 +53,10 @@ class ModelProvider(ABC):
         Generate multiple samples from the same prompt.
         Default: sequential calls. Override for native batch APIs.
         """
-        log.info(f"Generating {num_samples} samples via sequential calls")
+        logger.info(f"Generating {num_samples} samples via sequential calls")
         results = []
         for i in range(num_samples):
-            log.info(f"Generating sample {i + 1}/{num_samples}")
+            logger.info(f"Generating sample {i + 1}/{num_samples}")
             results.append(self.generate(prompt, options))
         return results
 

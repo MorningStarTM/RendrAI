@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
+from backend.logger import logger
 from backend.services.providers.model_provider import ModelProvider
 log = logging.getLogger("BedrockProvider")
 
@@ -59,7 +60,7 @@ class BedrockProvider(ModelProvider):
             service_name="bedrock-runtime",
             region_name=region,
         )
-        log.info(f"BedrockProvider initialised  model={model_id}  region={region}")
+        logger.info(f"BedrockProvider initialised  model={model_id}  region={region}")
 
     # ── ModelProvider interface ───────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ class BedrockProvider(ModelProvider):
             return result["content"][0]["text"]
 
         except (BotoCoreError, ClientError) as exc:
-            log.error(f"BedrockProvider.generate failed: {exc}")
+            logger.error(f"BedrockProvider.generate failed: {exc}")
             raise
 
     def health_check(self) -> bool:
@@ -105,5 +106,5 @@ class BedrockProvider(ModelProvider):
             self.generate("ping", options={"max_tokens": 5})
             return True
         except Exception as exc:
-            log.warning(f"BedrockProvider health_check failed: {exc}")
+            logger.warning(f"BedrockProvider health_check failed: {exc}")
             return False
