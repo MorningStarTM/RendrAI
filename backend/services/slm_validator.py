@@ -18,20 +18,16 @@ from typing import Any, Dict, Optional
 
 from backend.services.providers.model_provider import ModelProvider
 from backend.services.providers.bedrock_provider import BedrockProvider, CLAUDE_HAIKU
+from backend.logger import logger
 
-
-log = logging.getLogger("SLMClient")
     
-SYSTEM_PROMPT = """You are a creative brief validator.
-Given a list of brief elements, extract structured tags and validate suitability for image generation.
+SYSTEM_PROMPT = """You are a content safety checker.
+Check if the given brief contains adult content, violent content, hate speech, or any harmful/inappropriate material.
 
 Respond ONLY with valid JSON:
 {
-  "tags": [
-    {"category": "subject|style|color|mood|lighting|setting|quality", "value": "<value>", "confidence": 0.0-1.0}
-  ],
   "is_valid": true,
-  "feedback": "<optional notes>"
+  "feedback": "<reason if rejected, else empty string>"
 }"""
 
 
@@ -55,7 +51,7 @@ class SLMClient:
 
     def __init__(self, provider: Optional[ModelProvider] = None):
         self.provider = provider or BedrockProvider(model_id=CLAUDE_HAIKU)
-        log.info(f"SLMClient initialised  provider={self.provider.model_name}")
+        logger.info(f"SLMClient initialised  provider={self.provider.model_name}")
 
     # ── Called by node_slm_validate() ────────────────────────────────────────
 
@@ -75,24 +71,23 @@ class SLMClient:
         Returns:
             {"tags": [...], "is_valid": bool, "feedback": str}
         """
-        log.info(f"SLMClient.validate  chat_id={context.get('chat_id')}  elements={len(context.get('elements', []))}")
+        logger.info(f"SLMClient.validate  chat_id={context.get('chat_id')}  elements={len(context.get('elements', []))}")
 
         prompt = self._build_prompt(context)
         raw    = self.provider.generate(prompt, options={"system": SYSTEM_PROMPT, "max_tokens": 1024})
         result = self._parse_response(raw)
-
-        log.info(f"SLMClient.validate  tags={len(result.get('tags', []))}  valid={result.get('is_valid')}")
+        
+        logger.info(f"raw response: {raw}  ")
+        logger.info(f"SLMClient.validate  tags={len(result.get('tags', []))}  valid={result.get('is_valid')}")
         return result
 
     # ── Internal ──────────────────────────────────────────────────────────────
 
     def _build_prompt(self, context: Dict[str, Any]) -> str:
-        elements_json = json.dumps(context.get("elements", []), indent=2)
         return (
-            f"Brief ID: {context.get('chat_id')}\n\n"
-            f"Brief elements:\n{elements_json}\n\n"
-            f"Original input:\n{context.get('raw_input', '')}\n\n"
-            "Validate and extract tags."
+            f"Check this creative brief for inappropriate content:\n\n"
+            f"{context.get('raw_input', '')}\n\n"
+            "Is this safe and appropriate for image generation?"
         )
 
     def _parse_response(self, raw: str) -> Dict[str, Any]:
@@ -100,5 +95,5 @@ class SLMClient:
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            log.warning("SLMClient: response is not valid JSON — returning fallback")
+            logger.warning("SLMClient: response is not valid JSON — returning fallback")
             return {"tags": [], "is_valid": False, "feedback": f"Parse error. Raw: {raw[:200]}"}
