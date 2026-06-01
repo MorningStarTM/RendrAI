@@ -69,7 +69,7 @@ class NanoBananaProvider(ImageProvider):
 
     def __init__(
         self,
-        model:           str            = NANO_BANANA_2,
+        model:           str            = NANO_BANANA,
         api_key:         Optional[str]  = None,
         aspect_ratio:    str            = "1:1",
         image_size:      str            = "1K",
@@ -94,74 +94,23 @@ class NanoBananaProvider(ImageProvider):
         prompt:  str,
         options: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """
-        Generate an image via Nano Banana (Gemini API).
-
-        Args:
-            prompt:  Full prompt string.
-                     Tip from docs: descriptive narrative > keyword list.
-            options: Runtime overrides:
-                       aspect_ratio    str  e.g. "16:9"
-                       image_size      str  "512" | "1K" | "2K" | "4K"
-                       thinking_level  str  "minimal" | "high"
-                       negative_prompt str  folded into prompt naturally
-                                           (Gemini has no hard negative field)
-
-        Returns:
-            {
-              "image_data": bytes,   # raw PNG bytes
-              "image_url":  str,     # empty — filled by StorageClient after S3 upload
-              "format":     "png",
-              "metadata": {
-                "model":        str,
-                "prompt":       str,
-                "aspect_ratio": str,
-                "image_size":   str,
-              }
-            }
-        """
         from google import genai
         from google.genai import types
 
         opts            = options or {}
         aspect_ratio    = opts.get("aspect_ratio",    self.aspect_ratio)
-        image_size      = opts.get("image_size",      self.image_size)
-        thinking_level  = opts.get("thinking_level",  self.thinking_level)
         negative_prompt = opts.get("negative_prompt", "")
 
-        # Gemini has no hard negative-prompt field — fold it in naturally
         full_prompt = prompt
         if negative_prompt:
             full_prompt = f"{prompt}. Avoid: {negative_prompt}."
 
-        # response_format controls aspect ratio + resolution
-        response_format = {
-            "image": {
-                "aspectRatio": aspect_ratio,
-                "imageSize":   image_size,     # must be uppercase K e.g. "2K"
-            }
-        }
-
+        # ── remove response_format entirely ──
         config_kwargs: Dict[str, Any] = {
-            "response_modalities": ["IMAGE"],  # image only — no text padding
-            "response_format":     response_format,
+            "response_modalities": ["IMAGE"],
         }
 
-        # Thinking config — supported on Flash and Pro, not on gemini-2.5-flash-image
-        if self.model in (NANO_BANANA_2, NANO_BANANA_PRO):
-            config_kwargs["thinking_config"] = types.ThinkingConfig(
-                thinking_level=thinking_level,
-                include_thoughts=False,   # skip interim thought images in response
-            )
-
-        logger.info(
-            f"NanoBananaProvider.generate_image  model={self.model}  "
-            f"aspect_ratio={aspect_ratio}  image_size={image_size}  "
-            f"thinking={thinking_level}  prompt_len={len(full_prompt)}"
-        )
-
-        client = genai.Client(api_key=self._api_key)
-
+        client   = genai.Client(api_key=self._api_key)
         response = client.models.generate_content(
             model    = self.model,
             contents = [full_prompt],
@@ -170,19 +119,14 @@ class NanoBananaProvider(ImageProvider):
 
         image_data = self._extract_image_bytes(response)
 
-        logger.info(
-            f"NanoBananaProvider: image generated  bytes={len(image_data)}"
-        )
-
         return {
             "image_data": image_data,
-            "image_url":  "",       # StorageClient fills this after S3 upload
+            "image_url":  "",
             "format":     "png",
             "metadata": {
                 "model":        self.model,
                 "prompt":       full_prompt,
                 "aspect_ratio": aspect_ratio,
-                "image_size":   image_size,
             },
         }
 
