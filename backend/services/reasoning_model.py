@@ -66,7 +66,7 @@ class ReasoningClient:
     """
 
     def __init__(self, provider: Optional[OpenRouterProvider] = None):
-        self.provider = provider or OpenRouterProvider(model_id="openai/gpt-oss-120b:free")
+        self.provider = provider or BedrockProvider(model_id=CLAUDE_SONNET,region="us-east-1", max_tokens=2048)
         logger.info(f"ReasoningClient initialised  provider={self.provider.model_name}")
 
     # ── Called by node_reasoning() ────────────────────────────────────────────

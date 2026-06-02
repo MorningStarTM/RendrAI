@@ -91,9 +91,12 @@ class SLMClient:
         )
 
     def _parse_response(self, raw: str) -> Dict[str, Any]:
-        cleaned = re.sub(r"```(?:json)?|```", "", raw).strip()
-        try:
-            return json.loads(cleaned)
-        except json.JSONDecodeError:
-            logger.warning("SLMClient: response is not valid JSON — returning fallback")
-            return {"tags": [], "is_valid": False, "feedback": f"Parse error. Raw: {raw[:200]}"}
+        match = re.search(r'\{.*?\}', raw, re.DOTALL)
+        if match:
+            try:
+                data = json.loads(match.group())
+                return {"is_valid": data.get("is_valid", False)}
+            except json.JSONDecodeError:
+                pass
+        logger.warning("SLMClient: response is not valid JSON — returning fallback")
+        return {"is_valid": False}

@@ -14,8 +14,7 @@ Client classes (to be implemented separately):
   ImageClient       → services/image_api.py
   StorageClient     → services/storage.py
 
-Graph:
-  parse_input → slm_validate → reasoning → image_gen → store → END
+Graph:start → slm_validate → reasoning → image_gen → store → END
                      ↓ invalid
                     END
 """
@@ -28,15 +27,18 @@ from pathlib import Path
 
 from langgraph.graph import END, StateGraph
 
+from backend.services.providers.bedrock_provider import STABLE_DIFFUSION
 from services.providers.openroute_provider import OpenRouterProvider
+from services.providers.bedrock_image_provider import BedrockImageProvider 
+
+from services.providers.bedrock_provider import BedrockProvider
 from services.brief_manager import BriefManager
 from services.slm_validator import SLMClient
 from services.reasoning_model import ReasoningClient
 from services.image_api import ImageClient
 from services.storage import StorageClient
-
-log = logging.getLogger("Agent")
-
+from typing import Optional
+from backend.logger import logger
 
 DESKTOP = Path.home() / "Desktop" / "rendr_ai_output"
 
@@ -48,7 +50,7 @@ DESKTOP = Path.home() / "Desktop" / "rendr_ai_output"
 
 class BriefState(TypedDict):
     chat_id: str
-    error:   str | None
+    error:   Optional[str]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -68,13 +70,13 @@ def node_parse_input(
     BM writes: raw_input, input_type, elements
     """
     chat_id = state["chat_id"]
-    log.info("[parse_input] chat_id=%s  type=%s", chat_id, input_type)
+    logger.info("[parse_input] chat_id=%s  type=%s", chat_id, input_type)
 
     try:
         bm.store_raw_input(chat_id, raw_input, input_type)
-        log.info("[parse_input] elements=%d", len(bm.get_elements(chat_id)))
+        logger.info("[parse_input] elements=%d", len(bm.get_elements(chat_id)))
     except Exception as exc:
-        log.error("[parse_input] failed: %s", exc)
+        logger.error("[parse_input] failed: %s", exc)
         return {**state, "error": str(exc)}
 
     return state
@@ -92,21 +94,21 @@ def node_slm_validate(
     client  →  BM : result tags         →  store_tags()
     """
     chat_id = state["chat_id"]
-    log.info("[slm_validate] chat_id=%s", chat_id)
+    logger.info("[slm_validate] chat_id=%s", chat_id)
 
     try:
         context = bm.get_slm_context(chat_id)       # read from BM
         result  = client.validate(context)           # call SLMClient
         bm.store_tags(chat_id, result.get("tags", []))  # write to BM
 
-        log.info("[slm_validate] tags=%d  valid=%s",
+        logger.info("[slm_validate] tags=%d  valid=%s",
                  len(result.get("tags", [])), result.get("is_valid"))
 
         if not result.get("is_valid", True):
             return {**state, "error": result.get("feedback", "SLM rejected brief")}
 
     except Exception as exc:
-        log.error("[slm_validate] failed: %s", exc)
+        logger.error("[slm_validate] failed: %s", exc)
         return {**state, "error": str(exc)}
 
     return state
@@ -124,17 +126,17 @@ def node_reasoning(
     client  →  BM : prompts list             →  store_prompts()
     """
     chat_id = state["chat_id"]
-    log.info("[reasoning] chat_id=%s", chat_id)
+    logger.info("[reasoning] chat_id=%s", chat_id)
 
     try:
         context = bm.get_reasoning_context(chat_id)         # read from BM
         result  = client.generate_prompts(context)          # call ReasoningClient
         bm.store_prompts(chat_id, result.get("prompts", []))  # write to BM
 
-        log.info("[reasoning] prompts=%d", len(result.get("prompts", [])))
+        logger.info("[reasoning] prompts=%d", len(result.get("prompts", [])))
 
     except Exception as exc:
-        log.error("[reasoning] failed: %s", exc)
+        logger.error("[reasoning] failed: %s", exc)
         return {**state, "error": str(exc)}
 
     return state
@@ -152,7 +154,7 @@ def node_image_gen(
     client  →  BM : image results list       →  store_images()
     """
     chat_id = state["chat_id"]
-    log.info("[image_gen] chat_id=%s", chat_id)
+    logger.info("[image_gen] chat_id=%s", chat_id)
 
     try:
         context = bm.get_image_gen_context(chat_id)     # read from BM
@@ -160,7 +162,7 @@ def node_image_gen(
 
         images = []
         for idx, prompt in enumerate(prompts):
-            log.info("[image_gen] generating %d/%d", idx + 1, len(prompts))
+            logger.info("[image_gen] generating %d/%d", idx + 1, len(prompts))
 
             result = client.generate(                   # call ImageClient
                 prompt=prompt,
@@ -175,10 +177,10 @@ def node_image_gen(
             })
 
         bm.store_images(chat_id, images)                # write to BM
-        log.info("[image_gen] images=%d", len(images))
+        logger.info("[image_gen] images=%d", len(images))
 
     except Exception as exc:
-        log.error("[image_gen] failed: %s", exc)
+        logger.error("[image_gen] failed: %s", exc)
         return {**state, "error": str(exc)}
 
     return state
@@ -196,17 +198,17 @@ def node_store(
     client  →  BM : storage receipt        →  update()
     """
     chat_id = state["chat_id"]
-    log.info("[store] chat_id=%s", chat_id)
+    logger.info("[store] chat_id=%s", chat_id)
 
     try:
         context = bm.get_storage_context(chat_id)      # read from BM
         record  = client.store(context)                # call StorageClient
         bm.update(chat_id, {"storage_record": record}) # write receipt to BM
 
-        log.info("[store] db_id=%s", record.get("db_id"))
+        logger.info("[store] db_id=%s", record.get("db_id"))
 
     except Exception as exc:
-        log.error("[store] failed: %s", exc)
+        logger.error("[store] failed: %s", exc)
         return {**state, "error": str(exc)}
 
     return state
@@ -227,7 +229,7 @@ def node_image_gen_local(
             ...
     """
     chat_id = state["chat_id"]
-    log.info("[image_gen_local] chat_id=%s", chat_id)
+    logger.info("[image_gen_local] chat_id=%s", chat_id)
  
     try:
         context = bm.get_image_gen_context(chat_id)
@@ -236,11 +238,11 @@ def node_image_gen_local(
         # Create output folder: ~/Desktop/rendr_ai_output/{chat_id}/
         output_dir = DESKTOP / chat_id
         output_dir.mkdir(parents=True, exist_ok=True)
-        log.info("[image_gen_local] saving to %s", output_dir)
+        logger.info("[image_gen_local] saving to %s", output_dir)
  
         images = []
         for idx, prompt in enumerate(prompts):
-            log.info("[image_gen_local] generating %d/%d", idx + 1, len(prompts))
+            logger.info("[image_gen_local] generating %d/%d", idx + 1, len(prompts))
  
             result = client.generate(
                 prompt=prompt,
@@ -250,7 +252,7 @@ def node_image_gen_local(
             # Save to Desktop
             file_path = output_dir / f"prompt_{idx}.png"
             file_path.write_bytes(result["image_data"])
-            log.info("[image_gen_local] saved → %s", file_path)
+            logger.info("[image_gen_local] saved → %s", file_path)
  
             images.append({
                 "prompt_index": idx,
@@ -261,10 +263,10 @@ def node_image_gen_local(
             })
  
         bm.store_images(chat_id, images)
-        log.info("[image_gen_local] done  images=%d  folder=%s", len(images), output_dir)
+        logger.info("[image_gen_local] done  images=%d  folder=%s", len(images), output_dir)
  
     except Exception as exc:
-        log.error("[image_gen_local] failed: %s", exc)
+        logger.error("[image_gen_local] failed: %s", exc)
         return {**state, "error": str(exc)}
  
     return state
@@ -276,7 +278,7 @@ def node_image_gen_local(
 def route_after_slm(state: BriefState) -> str:
     """Route to reasoning if valid, END early if SLM rejected."""
     if state.get("error"):
-        log.warning("SLM rejected brief — stopping graph")
+        logger.warning("SLM rejected brief — stopping graph")
         return END
     return "reasoning"
 
@@ -356,30 +358,28 @@ def build_dev_graph(
     raw_input:  str,
     input_type: str = "auto",
 ):
-    """
-    Same graph as production but saves images to Desktop, not S3.
-    node_store is intentionally excluded — no DB, no S3 in dev.
-    """
-    slm       = SLMClient(provider=OpenRouterProvider())
+    slm       = SLMClient()
     reasoning = ReasoningClient()
-    image     = ImageClient()
- 
+    image     = ImageClient(provider=BedrockImageProvider(        # ← was BedrockProvider
+        model_id="amazon.nova-canvas-v1:0",
+        region="us-east-1",
+    ))
+
     def _parse(state):  return node_parse_input(state, bm, raw_input, input_type)
     def _slm(state):    return node_slm_validate(state, bm, slm)
     def _reason(state): return node_reasoning(state, bm, reasoning)
     def _imggen(state): return node_image_gen_local(state, bm, image)
- 
+
     g = StateGraph(BriefState)
- 
     g.add_node("parse_input",  _parse)
     g.add_node("slm_validate", _slm)
     g.add_node("reasoning",    _reason)
     g.add_node("image_gen",    _imggen)
- 
+
     g.set_entry_point("parse_input")
     g.add_edge("parse_input",  "slm_validate")
     g.add_conditional_edges("slm_validate", route_after_slm, {"reasoning": "reasoning", END: END})
     g.add_edge("reasoning",    "image_gen")
-    g.add_edge("image_gen",    END)          # ← was: END via "store" which didn't exist
- 
+    g.add_edge("image_gen",    END)
+
     return g.compile()

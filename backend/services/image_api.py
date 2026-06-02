@@ -16,10 +16,7 @@ from typing import Any, Dict, Optional
 
 from backend.services.providers.image_provider import ImageProvider
 from backend.services.providers.nano_banana_provider import NanoBananaProvider
-
-
-log = logging.getLogger("ImageClient")
-    
+from backend.logger import logger    
 
 class ImageClient:
     """
@@ -42,7 +39,7 @@ class ImageClient:
 
     def __init__(self, provider: Optional[ImageProvider] = None):
         self.provider = provider or NanoBananaProvider()
-        log.info(f"ImageClient initialised  provider={self.provider.model_name}")
+        logger.info(f"ImageClient initialised  provider={self.provider.model_name}")
 
     # ── Called by node_image_gen() ────────────────────────────────────────────
 
@@ -67,7 +64,7 @@ class ImageClient:
             }
         """
         meta = metadata or {}
-        log.info(
+        logger.info(
             f"ImageClient.generate  chat_id={meta.get('chat_id')}  "
             f"index={meta.get('prompt_index')}  prompt_len={len(prompt)}"
         )
@@ -80,7 +77,7 @@ class ImageClient:
         options = {"negative_prompt": negative} if negative else {}
         result  = self.provider.generate_image(positive, options=options)
 
-        log.info(f"ImageClient.generate  format={result.get('format')}  data_bytes={len(result.get('image_data', b''))}")
+        logger.info(f"ImageClient.generate  format={result.get('format')}  data_bytes={len(result.get('image_data', b''))}")
 
         return {
             "image_data": result.get("image_data", b""),
