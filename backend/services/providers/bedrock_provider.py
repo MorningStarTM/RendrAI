@@ -25,9 +25,9 @@ from backend.services.providers.model_provider import ModelProvider
 log = logging.getLogger("BedrockProvider")
 
 # Model ID constants — change here to switch Bedrock model versions
-CLAUDE_HAIKU  = "anthropic.claude-haiku-4-5-20251001-v1:0"
-CLAUDE_SONNET = "anthropic.claude-sonnet-4-20250514-v1:0"
-
+CLAUDE_HAIKU  = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+CLAUDE_SONNET = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+STABLE_DIFFUSION = "stability.stable-diffusion-xl-v1"
 
 class BedrockProvider(ModelProvider):
     """
