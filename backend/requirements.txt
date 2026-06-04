@@ -1,2 +1,7 @@
 psycopg2-binary==2.9.9
 streamlit==1.57.0
+boto3
+streamlit
+langgraph
+loguru
+pydantic
