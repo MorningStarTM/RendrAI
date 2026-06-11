@@ -91,8 +91,9 @@ class NanoBananaProvider(ImageProvider):
 
     def generate_image(
         self,
-        prompt:  str,
-        options: Optional[Dict[str, Any]] = None,
+        prompt:      str,
+        options:     Optional[Dict[str, Any]] = None,
+        input_image: Optional[bytes] = None,          # ← add this
     ) -> Dict[str, Any]:
         from google import genai
         from google.genai import types
@@ -105,15 +106,26 @@ class NanoBananaProvider(ImageProvider):
         if negative_prompt:
             full_prompt = f"{prompt}. Avoid: {negative_prompt}."
 
-        # ── remove response_format entirely ──
         config_kwargs: Dict[str, Any] = {
             "response_modalities": ["IMAGE"],
         }
 
-        client   = genai.Client(api_key=self._api_key)
+        client = genai.Client(api_key=self._api_key)
+
+        # ── Build contents depending on whether an input image was provided ──
+        if input_image is not None:
+            contents = [
+                types.Part.from_bytes(data=input_image, mime_type="image/png"),
+                full_prompt,
+            ]
+            logger.info("NanoBananaProvider: image-edit mode (input image provided)")
+        else:
+            contents = [full_prompt]
+            logger.info("NanoBananaProvider: text-to-image mode")
+
         response = client.models.generate_content(
             model    = self.model,
-            contents = [full_prompt],
+            contents = contents,
             config   = types.GenerateContentConfig(**config_kwargs),
         )
 
@@ -158,22 +170,16 @@ class NanoBananaProvider(ImageProvider):
     # ── Internal helpers ──────────────────────────────────────────────────────
 
     def _extract_image_bytes(self, response) -> bytes:
-        """
-        Walk response parts and return the first non-thought image's raw bytes.
+        parts = response.candidates[0].content.parts   # ← reliable path
 
-        The API may return thought images (interim reasoning steps) before the
-        final image. Per the docs, thought parts have `part.thought == True`.
-        We skip those and return only the final rendered image.
-        """
-        for part in response.parts:
+        for part in parts:
             if getattr(part, "thought", False):
-                # Reasoning/thought image — skip
                 continue
             if part.inline_data is not None:
                 return part.inline_data.data
 
         logger.error(
             "Nano Banana response contained no image data. "
-            f"Parts received: {[type(p).__name__ for p in response.parts]}"
+            f"Parts received: {[type(p).__name__ for p in parts]}"
         )
         raise ValueError("No image data found in response.")
