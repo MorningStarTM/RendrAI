@@ -39,14 +39,9 @@ for p in (str(BACKEND), str(ROOT)):
 
 from services.agent         import build_dev_graph     # noqa: E402
 from services.brief_manager import BriefManager        # noqa: E402
+from logger import logger
 
-# ── Logging → visible in terminal running streamlit ──────────────────────────
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s  %(levelname)-7s  %(name)s — %(message)s",
-)
-log = logging.getLogger("dev_tester")
-
+# ── Logging → visible in terminal running streamlit ─────────────────────────
 
 # ─── Page Config ─────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -136,7 +131,8 @@ for k, v in {
 with st.sidebar:
     st.markdown("## 🧪 RendrAI\nGraph Dev Tester")
     st.markdown('<div class="section">Input type</div>', unsafe_allow_html=True)
-    input_type = st.selectbox("Input type", ["auto", "text", "csv"], index=0)
+    input_type = st.selectbox("Input type", ["text", "auto","csv"], index=0)
+
 
     st.markdown('<div class="section">Graph nodes</div>', unsafe_allow_html=True)
     for node_id, label, desc in GRAPH_NODES:
@@ -181,6 +177,16 @@ brief_text = st.text_area(
     label_visibility="collapsed",
 )
 
+# ← add here
+st.markdown('<div class="section">Input image (optional)</div>', unsafe_allow_html=True)
+uploaded_image = st.file_uploader(
+    "Drag & drop an image to modify, or click to browse",
+    type=["png", "jpg", "jpeg"],
+    label_visibility="collapsed",
+)
+if uploaded_image is not None:
+    st.image(uploaded_image, caption="Image to modify", width=200)
+
 run_col, _ = st.columns([1, 4])
 with run_col:
     run = st.button("▶  RUN GRAPH", use_container_width=True)
@@ -191,19 +197,29 @@ if run:
     if not brief_text.strip():
         st.error("Brief is empty.")
     else:
-        # Reset state
+        # Reset node log and error only — keep chat_id for update mode
         st.session_state.result   = None
         st.session_state.node_log = {}
         st.session_state.error_tb = None
 
-        chat_id = f"dev-{uuid.uuid4().hex[:8]}"
-        st.session_state.chat_id = chat_id
+        if st.session_state.chat_id is None:
+            # First run — create new session
+            chat_id = f"dev-{uuid.uuid4().hex[:8]}"
+            st.session_state.chat_id = chat_id
+            bm = BriefManager()
+            bm.create(chat_id)
+        else:
+            # Subsequent run — reuse existing session
+            chat_id = st.session_state.chat_id
+            bm = BriefManager()  # reinstantiate (reads from disk)
 
-        bm = BriefManager()
-        bm.create(chat_id)          # creates store/{chat_id}.json on disk first
         st.session_state.bm = bm
 
-        log.info("Starting dev graph  chat_id=%s", chat_id)
+        if uploaded_image is not None:
+            bm.store_input_image(chat_id, uploaded_image.read())
+            logger.info("Input image stored  chat_id=%s", chat_id)
+
+        logger.info("Starting dev graph  chat_id=%s", chat_id)
 
         with st.spinner("Running graph…"):
             t0 = time.time()
@@ -212,16 +228,9 @@ if run:
                 result = graph.invoke({"chat_id": chat_id, "error": None})
                 st.session_state.elapsed = round(time.time() - t0, 2)
 
-                # ── Work out which nodes ran ──────────────────────────────
-                # LangGraph doesn't emit per-node events in .invoke() by default.
-                # We infer status from BriefManager state + result error field.
                 error_msg = result.get("error")
 
-                # parse_input always runs
                 st.session_state.node_log["parse_input"] = "done"
-
-                # slm_validate always runs (it's next)
-                slm_ok = bm.get_tags(chat_id) is not None   # tags were stored
                 st.session_state.node_log["slm_validate"] = "done" if not error_msg else "error"
 
                 if not error_msg:
@@ -237,8 +246,7 @@ if run:
             except Exception:
                 st.session_state.elapsed = round(time.time() - t0, 2)
                 st.session_state.error_tb = traceback.format_exc()
-                log.error("Graph crashed:\n%s", st.session_state.error_tb)
-                # mark all as error
+                logger.error("Graph crashed:\n%s", st.session_state.error_tb)
                 for node_id, *_ in GRAPH_NODES:
                     st.session_state.node_log[node_id] = "error"
 
