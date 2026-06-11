@@ -31,7 +31,7 @@ from langgraph.graph import END, StateGraph
 from backend.services.providers.bedrock_provider import STABLE_DIFFUSION
 from services.providers.openroute_provider import OpenRouterProvider
 from services.providers.bedrock_image_provider import BedrockImageProvider 
-from services.providers.nano_banana_provider import NanoBananaProvider
+from services.providers.nano_banana_provider import NanoBananaProvider, NANO_BANANA_2
 
 from services.providers.bedrock_provider import BedrockProvider
 from services.brief_manager import BriefManager
@@ -372,7 +372,7 @@ def build_dev_graph(
 ):
     slm       = SLMClient()
     reasoning = ReasoningClient()
-    image     = ImageClient(provider=NanoBananaProvider())
+    image     = ImageClient(provider=NanoBananaProvider(model=NANO_BANANA_2)) 
 
     def _parse(state):    return node_parse_input(state, bm, raw_input, input_type)
     def _slm(state):      return node_slm_validate(state, bm, slm)
