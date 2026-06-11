@@ -21,6 +21,7 @@ Graph:start → slm_validate → reasoning → image_gen → store → END
 
 from __future__ import annotations
 
+import base64
 import logging
 from typing import Any, TypedDict
 from pathlib import Path
@@ -30,6 +31,7 @@ from langgraph.graph import END, StateGraph
 from backend.services.providers.bedrock_provider import STABLE_DIFFUSION
 from services.providers.openroute_provider import OpenRouterProvider
 from services.providers.bedrock_image_provider import BedrockImageProvider 
+from services.providers.nano_banana_provider import NanoBananaProvider
 
 from services.providers.bedrock_provider import BedrockProvider
 from services.brief_manager import BriefManager
@@ -167,6 +169,7 @@ def node_image_gen(
             result = client.generate(                   # call ImageClient
                 prompt=prompt,
                 metadata={"chat_id": chat_id, "prompt_index": idx},
+                input_image=context.get("input_image")
             )
 
             images.append({
@@ -247,6 +250,7 @@ def node_image_gen_local(
             result = client.generate(
                 prompt=prompt,
                 metadata={"chat_id": chat_id, "prompt_index": idx},
+                input_image=context.get("input_image"),
             )
  
             # Save to Desktop
@@ -260,6 +264,7 @@ def node_image_gen_local(
                 "image_url":    "",                  # no S3 in dev
                 "s3_key":       "",                  # no S3 in dev
                 "local_path":   str(file_path),      # dev-only field
+                "image_data":base64.b64encode(result["image_data"]).decode("utf-8"),
             })
  
         bm.store_images(chat_id, images)
@@ -276,10 +281,17 @@ def node_image_gen_local(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def route_after_slm(state: BriefState) -> str:
-    """Route to reasoning if valid, END early if SLM rejected."""
     if state.get("error"):
         logger.warning("SLM rejected brief — stopping graph")
-        return END
+        return "end"
+    return "reasoning"
+
+def route_after_slm_dev(state: BriefState, bm: BriefManager) -> str:
+    if state.get("error"):
+        return "end"
+    if bm.is_update_mode(state["chat_id"]):
+        logger.info("Update mode — skipping reasoning, going straight to image_gen")
+        return "image_gen"   # ← skip reasoning
     return "reasoning"
 
 
@@ -360,15 +372,13 @@ def build_dev_graph(
 ):
     slm       = SLMClient()
     reasoning = ReasoningClient()
-    image     = ImageClient(provider=BedrockImageProvider(        # ← was BedrockProvider
-        model_id="amazon.nova-canvas-v1:0",
-        region="us-east-1",
-    ))
+    image     = ImageClient(provider=NanoBananaProvider())
 
-    def _parse(state):  return node_parse_input(state, bm, raw_input, input_type)
-    def _slm(state):    return node_slm_validate(state, bm, slm)
-    def _reason(state): return node_reasoning(state, bm, reasoning)
-    def _imggen(state): return node_image_gen_local(state, bm, image)
+    def _parse(state):    return node_parse_input(state, bm, raw_input, input_type)
+    def _slm(state):      return node_slm_validate(state, bm, slm)
+    def _reason(state):   return node_reasoning(state, bm, reasoning)
+    def _imggen(state):   return node_image_gen_local(state, bm, image)
+    def _route_slm(state): return route_after_slm_dev(state, bm)   # ← add here
 
     g = StateGraph(BriefState)
     g.add_node("parse_input",  _parse)
@@ -377,9 +387,15 @@ def build_dev_graph(
     g.add_node("image_gen",    _imggen)
 
     g.set_entry_point("parse_input")
-    g.add_edge("parse_input",  "slm_validate")
-    g.add_conditional_edges("slm_validate", route_after_slm, {"reasoning": "reasoning", END: END})
-    g.add_edge("reasoning",    "image_gen")
-    g.add_edge("image_gen",    END)
+    g.add_edge("parse_input", "slm_validate")
+
+    g.add_conditional_edges(
+        "slm_validate",
+        _route_slm,                                                    # ← swap this
+        {"reasoning": "reasoning", "image_gen": "image_gen", "end": END},  # ← add image_gen key
+    )
+
+    g.add_edge("reasoning", "image_gen")
+    g.add_edge("image_gen", END)
 
     return g.compile()
