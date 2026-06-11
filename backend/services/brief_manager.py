@@ -64,6 +64,7 @@ class BriefManager:
             # raw input
             "raw_input":  None,
             "input_type": None,
+            "input_image": None,   # ← add this for image-to-image support
             # pipeline stages
             "elements":   [],   # parsed from raw_input
             "tags":       [],   # written by SLM node
@@ -72,6 +73,11 @@ class BriefManager:
         })
         logger.info("Session created  chat_id=%s", chat_id)
         return chat_id
+
+    def is_update_mode(self, chat_id: str) -> bool:
+        """True if this run is modifying a previously generated image."""
+        brief = self._read(chat_id)
+        return bool(brief.get("images"))  # images exist from a prior run
 
     def delete(self, chat_id: str) -> None:
         """Remove a session from disk."""
@@ -227,44 +233,46 @@ class BriefManager:
         }
 
     def get_reasoning_context(self, chat_id: str) -> dict[str, Any]:
-        """
-        Build the payload for the Reasoning Model node.
-
-        The Reasoning Model receives elements + the validated tags from
-        the SLM, and returns image-generation prompts.
-
-        Returns:
-            {
-              "chat_id":  str,
-              "task":     "generate_image_prompts",
-              "elements": [...],
-              "tags":     [...],
-            }
-        """
         brief = self._read(chat_id)
+        images = brief.get("images", [])
+
+        # In update mode, include previous prompt so reasoning refines it
+        prev_prompt = images[-1].get("prompt", "") if images else ""
+
         return {
-            "chat_id":  chat_id,
-            "task":     "generate_image_prompts",
-            "elements": brief.get("elements", []),
-            "tags":     brief.get("tags", []),
+            "chat_id":     chat_id,
+            "task":        "generate_image_prompts",
+            "raw_input":   brief.get("raw_input", ""),
+            "elements":    brief.get("elements", []),
+            "tags":        brief.get("tags", []),
+            "prev_prompt": prev_prompt,   # ← add this
         }
 
     def get_image_gen_context(self, chat_id: str) -> dict[str, Any]:
-        """
-        Build the payload for the Image Generation node.
-
-        Returns:
-            {
-              "chat_id": str,
-              "task":    "generate_images",
-              "prompts": [...],
-            }
-        """
+        import base64
         brief = self._read(chat_id)
+
+        encoded = brief.get("input_image", None)
+        images  = brief.get("images", [])
+
+        if not encoded and images:
+            encoded = images[-1].get("image_data", None)
+
+        image_bytes = base64.b64decode(encoded) if encoded else None
+
+        # In update mode, use previous prompt + new modification instruction
+        if images and not brief.get("input_image"):
+            prev_prompt = images[-1].get("prompt", "")
+            mod_instruction = brief.get("raw_input", "")
+            prompts = [f"{prev_prompt}. Modification: {mod_instruction}"]
+        else:
+            prompts = brief.get("prompts", [])
+
         return {
-            "chat_id": chat_id,
-            "task":    "generate_images",
-            "prompts": brief.get("prompts", []),
+            "chat_id":     chat_id,
+            "task":        "generate_images",
+            "prompts":     prompts,
+            "input_image": image_bytes,
         }
 
     def get_storage_context(self, chat_id: str) -> dict[str, Any]:
@@ -292,6 +300,14 @@ class BriefManager:
             "prompts":    brief.get("prompts", []),
             "images":     brief.get("images", []),
         }
+    
+    def store_input_image(self, chat_id: str, image_bytes: bytes | None) -> None:
+        import base64
+        encoded = base64.b64encode(image_bytes).decode("utf-8") if image_bytes else None
+        self._patch(chat_id, {"input_image": encoded})
+        logger.info("store_input_image  chat_id=%s  bytes=%s",
+                    chat_id, len(image_bytes) if image_bytes else 0)
+    
 
     # ------------------------------------------------------------------
     # Introspection
@@ -372,11 +388,21 @@ def _now() -> str:
 
 
 def _detect_input_type(raw: str) -> str:
-    """Heuristic: first non-empty line containing a comma → CSV."""
-    for line in raw.splitlines():
-        line = line.strip()
-        if line:
-            return "csv" if "," in line else "text"
+    """Heuristic: looks like CSV only if it has a header row pattern."""
+    lines = [l.strip() for l in raw.splitlines() if l.strip()]
+    if not lines:
+        return "text"
+    # Only treat as CSV if multiple lines AND first line looks like headers
+    # (short comma-separated words, no sentence structure)
+    first = lines[0]
+    parts = first.split(",")
+    if (
+        len(lines) > 1
+        and len(parts) >= 2
+        and all(len(p.strip().split()) <= 3 for p in parts)  # header words are short
+        and not first.endswith("?")
+    ):
+        return "csv"
     return "text"
 
 
@@ -411,3 +437,5 @@ def _parse_text(raw: str) -> list[dict[str, Any]]:
         else:
             elements.append({"value": line})
     return elements
+
+
