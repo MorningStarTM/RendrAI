@@ -45,22 +45,28 @@ class ImageClient:
 
     def generate(
         self,
-        prompt:      str,
+        prompt:      str | dict,
         metadata:    Optional[Dict[str, Any]] = None,
-        input_image: Optional[bytes] = None,          # ← add this
+        input_image: Optional[bytes] = None,
     ) -> Dict[str, Any]:
         meta = metadata or {}
+
+        # Handle dict prompt (from reasoning model output)
+        if isinstance(prompt, dict):
+            positive = prompt.get("positive") or prompt.get("full_prompt", "")
+            negative = prompt.get("negative", "")
+        else:
+            positive, _, negative = prompt.partition("| negative:")
+            positive = positive.strip()
+            negative = negative.strip()
+
         logger.info(
             f"ImageClient.generate  chat_id={meta.get('chat_id')}  "
-            f"index={meta.get('prompt_index')}  prompt_len={len(prompt)}"
+            f"index={meta.get('prompt_index')}  prompt_len={len(positive)}"
         )
 
-        positive, _, negative = prompt.partition("| negative:")
-        positive = positive.strip()
-        negative = negative.strip()
-
         options = {"negative_prompt": negative} if negative else {}
-        result  = self.provider.generate_image(positive, options=options, input_image=input_image)  # ← pass it
+        result  = self.provider.generate_image(positive, options=options, input_image=input_image)
 
         logger.info(f"ImageClient.generate  format={result.get('format')}  data_bytes={len(result.get('image_data', b''))}")
 
