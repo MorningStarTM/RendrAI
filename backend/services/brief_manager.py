@@ -250,23 +250,30 @@ class BriefManager:
 
     def get_image_gen_context(self, chat_id: str) -> dict[str, Any]:
         import base64
-        brief = self._read(chat_id)
+        brief  = self._read(chat_id)
+        images = brief.get("images", [])
 
-        encoded = brief.get("input_image", None)
-        images  = brief.get("images", [])
+        if images:
+            encoded     = images[-1].get("image_data")
+            image_bytes = base64.b64decode(encoded) if encoded else None
 
-        if not encoded and images:
-            encoded = images[-1].get("image_data", None)
-
-        image_bytes = base64.b64decode(encoded) if encoded else None
-
-        # In update mode, use previous prompt + new modification instruction
-        if images and not brief.get("input_image"):
             prev_prompt = images[-1].get("prompt", "")
+            if isinstance(prev_prompt, dict):
+                prev_prompt = prev_prompt.get("positive") or prev_prompt.get("full_prompt", "")
+
             mod_instruction = brief.get("raw_input", "")
-            prompts = [f"{prev_prompt}. Modification: {mod_instruction}"]
+            combined_prompt = (
+                f"This image was generated with the following prompt: {prev_prompt}\n\n"
+                f"Modify the image with these changes only: {mod_instruction}\n\n"
+                f"Keep everything else exactly the same."
+            )
+            prompts = [combined_prompt]
+            logger.info("get_image_gen_context  mode=update  prompt=%s", combined_prompt[:80])
+
         else:
-            prompts = brief.get("prompts", [])
+            image_bytes = None
+            prompts     = brief.get("prompts", [])
+            logger.info("get_image_gen_context  mode=generate  prompts=%d", len(prompts))
 
         return {
             "chat_id":     chat_id,
