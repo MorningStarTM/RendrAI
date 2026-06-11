@@ -5,3 +5,4 @@ streamlit
 langgraph
 loguru
 pydantic
+google-genai
