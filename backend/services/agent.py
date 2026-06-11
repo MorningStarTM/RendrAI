@@ -135,6 +135,8 @@ def node_reasoning(
         result  = client.generate_prompts(context)          # call ReasoningClient
         bm.store_prompts(chat_id, result.get("prompts", []))  # write to BM
 
+        if result.get("chat_name"):
+            bm.update(chat_id, {"chat_name": result["chat_name"]})  # optional chat name
         logger.info("[reasoning] prompts=%d", len(result.get("prompts", [])))
 
     except Exception as exc:
