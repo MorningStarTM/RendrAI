@@ -148,7 +148,18 @@ with st.sidebar:
 
     if st.session_state.chat_id:
         st.markdown('<div class="section">Session</div>', unsafe_allow_html=True)
-        st.code(st.session_state.chat_id, language=None)
+        _bm      = st.session_state.bm
+        _chat_id = st.session_state.chat_id
+        try:
+            chat_name = _bm.get_all(_chat_id).get("chat_name") or _chat_id
+        except Exception:
+            chat_name = _chat_id
+        st.markdown(
+            f'<div style="font-size:0.78rem;color:#c8a96e;padding:4px 0;'
+            f'word-break:break-word;">{chat_name}</div>',
+            unsafe_allow_html=True,
+        )
+        st.code(_chat_id, language=None)
 
     if st.session_state.result is not None:
         if st.button("🔄 Reset", use_container_width=True):
