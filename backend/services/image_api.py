@@ -45,43 +45,28 @@ class ImageClient:
 
     def generate(
         self,
-        prompt:   str,
-        metadata: Optional[Dict[str, Any]] = None,
+        prompt:      str,
+        metadata:    Optional[Dict[str, Any]] = None,
+        input_image: Optional[bytes] = None,          # ← add this
     ) -> Dict[str, Any]:
-        """
-        Generate a single image from a prompt.
-
-        Args:
-            prompt:   Full prompt string (with optional "| negative: ..." suffix).
-            metadata: {"chat_id": str, "prompt_index": int}
-
-        Returns:
-            {
-              "image_data": bytes,   # raw image bytes (used by StorageClient for S3 upload)
-              "image_url":  str,     # empty here — filled by StorageClient after upload
-              "s3_key":     str,     # empty here — filled by StorageClient after upload
-              "format":     str,
-            }
-        """
         meta = metadata or {}
         logger.info(
             f"ImageClient.generate  chat_id={meta.get('chat_id')}  "
             f"index={meta.get('prompt_index')}  prompt_len={len(prompt)}"
         )
 
-        # Split positive / negative prompt
         positive, _, negative = prompt.partition("| negative:")
         positive = positive.strip()
         negative = negative.strip()
 
         options = {"negative_prompt": negative} if negative else {}
-        result  = self.provider.generate_image(positive, options=options)
+        result  = self.provider.generate_image(positive, options=options, input_image=input_image)  # ← pass it
 
         logger.info(f"ImageClient.generate  format={result.get('format')}  data_bytes={len(result.get('image_data', b''))}")
 
         return {
             "image_data": result.get("image_data", b""),
-            "image_url":  result.get("image_url",  ""),   # filled by StorageClient
-            "s3_key":     "",                              # filled by StorageClient
+            "image_url":  result.get("image_url",  ""),
+            "s3_key":     "",
             "format":     result.get("format", "png"),
         }
