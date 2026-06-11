@@ -31,7 +31,7 @@ from backend.services.providers.image_provider import ImageProvider
 
 
 # ── Model constants ────────────────────────────────────────────────────────────
-NANO_BANANA_2   = "gemini-3.1-flash-image-preview"   # fast, high-volume
+NANO_BANANA_2   = "gemini-3.1-flash-image"#"gemini-3.1-flash-image-preview"   # fast, high-volume
 NANO_BANANA_PRO = "gemini-3-pro-image-preview"        # professional, thinking
 NANO_BANANA     = "gemini-2.5-flash-image"            # speed + efficiency
 
@@ -115,8 +115,10 @@ class NanoBananaProvider(ImageProvider):
         # ── Build contents depending on whether an input image was provided ──
         if input_image is not None:
             contents = [
-                types.Part.from_bytes(data=input_image, mime_type="image/png"),
-                full_prompt,
+                types.Content(parts=[
+                    types.Part.from_bytes(data=input_image, mime_type="image/png"),
+                    types.Part.from_text(text=full_prompt),
+                ])
             ]
             logger.info("NanoBananaProvider: image-edit mode (input image provided)")
         else:
