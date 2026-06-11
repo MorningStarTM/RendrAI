@@ -22,25 +22,31 @@ from backend.services.providers.bedrock_provider import BedrockProvider, CLAUDE_
 from backend.logger import logger
 
 
-    
 SYSTEM_PROMPT = """You are an expert creative director and prompt engineer for AI image generation.
 
-Given a validated creative brief with structured tags, generate 1-4 detailed image-generation prompts.
+Given a creative brief, generate 1-4 detailed image-generation prompts that STRICTLY follow every requirement.
 
-Rules:
-- Each prompt must be self-contained and richly descriptive.
-- Include: subject, style, lighting, mood, color, composition, quality keywords.
-- Append negative prompt hints after " | negative: ".
+RULES:
+- Every visual, text, CTA, pricing, headline, subheading instruction from the brief MUST appear verbatim in the prompt.
+- Text overlays must be written exactly as: 'headline text: "Mega Sale"', 'subheading: "Sales"', 'CTA: "Order Now"', 'price text: "Starting from $200"'
+- Never skip, summarize, or paraphrase client text requirements.
+- Match the exact number of concepts the brief asks for.
+- Include: subject, style, lighting, mood, color, composition, text overlays, quality keywords.
+- Append negative prompt after " | negative: ".
+
+EXAMPLE:
+Brief says: "headline - Mega Sale, sub heading - sales, pricing starting from $200, CTA - order now"
+Your prompt MUST contain: 'bold headline text "Mega Sale" in upper area, subheading "Sales" below it, price text "Starting from $200" in mid-lower area, CTA "Order Now" at bottom'
 
 Respond ONLY with valid JSON:
 {
   "prompts": [
     {
-      "index":       0,
-      "description": "<short label>",
-      "positive":    "<full positive prompt>",
-      "negative":    "<negative prompt>",
-      "full_prompt": "<positive> | negative: <negative>",
+      "index":        0,
+      "description":  "<short label>",
+      "positive":     "<full prompt with ALL brief requirements including verbatim text>",
+      "negative":     "<negative prompt>",
+      "full_prompt":  "<positive> | negative: <negative>",
       "aspect_ratio": "1:1"
     }
   ]
@@ -89,8 +95,9 @@ class ReasoningClient:
                                         ready for ImageClient.generate()
         """
         logger.info(f"ReasoningClient.generate_prompts  chat_id={context.get('chat_id')}  tags={len(context.get('tags', []))}")
-
+        logger.info(f"Raw Conext for ReasoningClient:\n{context}\n")
         prompt  = self._build_prompt(context)
+        logger.info(f"ReasoningClient: sending prompt to model provider:\n{prompt}\n")
         raw     = self.provider.generate(prompt, options={"system": SYSTEM_PROMPT, "max_tokens": 2048})
         parsed  = self._parse_response(raw)
 
@@ -105,14 +112,20 @@ class ReasoningClient:
 
     # ── Internal ──────────────────────────────────────────────────────────────
 
-    def _build_prompt(self, context: Dict[str, Any]) -> str:
-        elements_json = json.dumps(context.get("elements", []), indent=2)
-        tags_json     = json.dumps(context.get("tags", []),     indent=2)
+    def _build_prompt(self, context):
+        prev = context.get("prev_prompt", "")
+        if prev:
+            return (
+                f"You are modifying an existing image. "
+                f"Here is the previous prompt that generated the image:\n\n"
+                f"{prev}\n\n"
+                f"Apply ONLY this modification to it:\n\n"
+                f"{context.get('raw_input', '')}\n\n"
+                f"Return a new full prompt with the modification applied. Keep everything else identical."
+            )
         return (
-            f"Brief ID: {context.get('chat_id')}\n\n"
-            f"Brief elements:\n{elements_json}\n\n"
-            f"Validated tags:\n{tags_json}\n\n"
-            "Generate image prompts."
+            f"Generate image prompts for this creative brief:\n\n"
+            f"{context.get('raw_input', '')}"
         )
 
     def _parse_response(self, raw: str) -> Dict[str, Any]:
