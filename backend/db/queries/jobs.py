@@ -1,102 +1,105 @@
-import uuid
-from db.database import PostgresHandler
+"""
+backend/db/queries/jobs.py
+============================
+All SQL queries for the jobs table.
+One job = one full pipeline run (brief submission) inside a session.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+from backend.db.database import get_conn
 
 
-class JobHandler(PostgresHandler):
+# ─── Create ───────────────────────────────────────────────────────────────────
 
-    # ── Write ──────────────────────────────────────────────────────
+def create_job(
+    session_id: str,
+    brief_text: str,
+    input_type: str = "text",
+) -> dict[str, Any]:
+    """
+    Insert a new job row when a pipeline run starts.
 
-    def create(self, session_id: str):
-        """Create a new job for a session. Returns generated job_id."""
-        job_id = str(uuid.uuid4())
-        self.execute(
-            "INSERT INTO jobs (id, session_id) VALUES (%s, %s)",
-            (job_id, session_id)
-        )
-        return job_id
+    Args:
+        session_id: The parent session ID.
+        brief_text: Raw user brief text.
+        input_type: 'text' | 'csv' | 'auto'
 
-    def update_status(self, job_id: str, status: str, error_msg: str = None):
-        """Update job status and optionally record an error message."""
-        self.execute(
-            """
-            UPDATE jobs
-            SET status      = %s,
-                error_msg   = %s,
-                updated_at  = NOW()
-            WHERE id = %s
-            """,
-            (status, error_msg, job_id)
-        )
+    Returns:
+        The created job row.
+    """
+    sql = """
+        INSERT INTO jobs (session_id, brief_text, input_type, status)
+        VALUES (%s, %s, %s, 'running')
+        RETURNING id, session_id, brief_text, input_type,
+                  status, retry_count, error_msg, created_at, updated_at;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (session_id, brief_text, input_type))
+            return dict(cur.fetchone())
 
-    def increment_retry(self, job_id: str):
-        """Increment retry counter by 1."""
-        self.execute(
-            "UPDATE jobs SET retry_count = retry_count + 1, updated_at = NOW() WHERE id = %s",
-            (job_id,)
-        )
 
-    def clear_error(self, job_id: str):
-        """Clear error message when retrying."""
-        self.execute(
-            "UPDATE jobs SET error_msg = NULL, updated_at = NOW() WHERE id = %s",
-            (job_id,)
-        )
+# ─── Read ─────────────────────────────────────────────────────────────────────
 
-    # ── Read ───────────────────────────────────────────────────────
+def get_job(job_id: str) -> dict[str, Any] | None:
+    """Fetch a single job by ID."""
+    sql = """
+        SELECT id, session_id, brief_text, input_type,
+               status, retry_count, error_msg, created_at, updated_at
+        FROM jobs
+        WHERE id = %s;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (job_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
 
-    def get_by_id(self, job_id: str):
-        return self.fetchone(
-            "SELECT * FROM jobs WHERE id = %s",
-            (job_id,)
-        )
 
-    def get_by_session(self, session_id: str):
-        """Get the job associated with a session — used by WebSocket status endpoint."""
-        return self.fetchone(
-            "SELECT * FROM jobs WHERE session_id = %s",
-            (session_id,)
-        )
+def list_jobs_for_session(session_id: str) -> list[dict[str, Any]]:
+    """
+    Return all jobs for a session ordered oldest → newest.
+    Used to build the ordered generation list for a chat.
+    """
+    sql = """
+        SELECT id, session_id, brief_text, input_type,
+               status, retry_count, error_msg, created_at, updated_at
+        FROM jobs
+        WHERE session_id = %s
+        ORDER BY created_at ASC;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (session_id,))
+            return [dict(r) for r in cur.fetchall()]
 
-    def get_status(self, job_id: str):
-        """Lightweight status-only fetch — used for polling."""
-        return self.fetchone(
-            "SELECT id, status, retry_count, error_msg FROM jobs WHERE id = %s",
-            (job_id,)
-        )
 
-    def get_by_status(self, status: str):
-        """Get all jobs with a given status — useful for admin/retry queue."""
-        return self.fetchall(
-            "SELECT * FROM jobs WHERE status = %s ORDER BY created_at ASC",
-            (status,)
-        )
+# ─── Update ───────────────────────────────────────────────────────────────────
 
-    def get_failed(self):
-        """All failed jobs with error messages — for error monitoring."""
-        return self.fetchall(
-            "SELECT * FROM jobs WHERE status = 'failed' ORDER BY updated_at DESC"
-        )
+def mark_job_complete(job_id: str) -> None:
+    """Mark a job as complete after successful pipeline run."""
+    sql = """
+        UPDATE jobs
+        SET status = 'complete', updated_at = NOW()
+        WHERE id = %s;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (job_id,))
 
-    def get_pending(self):
-        """All jobs still waiting to be processed."""
-        return self.fetchall(
-            "SELECT * FROM jobs WHERE status = 'pending' ORDER BY created_at ASC"
-        )
 
-    def get_retryable(self, max_retries: int = 3):
-        """Failed jobs that haven't exceeded max retry limit."""
-        return self.fetchall(
-            """
-            SELECT * FROM jobs
-            WHERE status = 'failed' AND retry_count < %s
-            ORDER BY updated_at ASC
-            """,
-            (max_retries,)
-        )
-
-    def count_by_status(self) -> dict:
-        """Count of jobs per status — for monitoring dashboard."""
-        rows = self.fetchall(
-            "SELECT status, COUNT(*) AS cnt FROM jobs GROUP BY status"
-        )
-        return {row["status"]: row["cnt"] for row in rows} if rows else {}
+def mark_job_failed(job_id: str, error_msg: str) -> None:
+    """Mark a job as failed with an error message."""
+    sql = """
+        UPDATE jobs
+        SET status     = 'failed',
+            error_msg  = %s,
+            retry_count = retry_count + 1,
+            updated_at  = NOW()
+        WHERE id = %s;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (error_msg, job_id))

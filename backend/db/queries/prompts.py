@@ -1,211 +1,199 @@
-import uuid
-from db.database import PostgresHandler
+"""
+backend/db/queries/prompts.py
+================================
+All SQL queries for the prompts table.
+
+The generation tree is built via parent_id (self-referencing FK):
+  - parent_id = NULL  →  root generation (first run in a session)
+  - parent_id = <id>  →  iteration/update on a specific image
+
+Tree for a session looks like:
+  job_1
+    └── prompt_0  (parent_id=NULL)   image_0.png
+    └── prompt_1  (parent_id=NULL)   image_1.png
+  job_2  (user iterated on image_1)
+    └── prompt_0  (parent_id=prompt_1_id)  image_0.png
+"""
+
+from __future__ import annotations
+
+from typing import Any
+from backend.db.database import get_conn
 
 
-class PromptHandler(PostgresHandler):
+# ─── Create ───────────────────────────────────────────────────────────────────
 
-    # ── Write ──────────────────────────────────────────────────────
+def insert_prompt(
+    session_id:   str,
+    job_id:       str,
+    prompt_index: int,
+    text:         str,
+    local_path:   str,
+    parent_id:    str | None = None,
+    image_url:    str = "",
+    image_s3_key: str = "",
+) -> dict[str, Any]:
+    """
+    Insert one generated image/prompt row.
 
-    def create(self, session_id: str, text: str, parent_id: str = None):
-        """
-        Insert a new prompt.
-        parent_id=None for original 5 variations.
-        parent_id=<id> for user-driven iterations.
-        Returns generated prompt_id.
-        """
-        prompt_id = str(uuid.uuid4())
-        self.execute(
-            """
-            INSERT INTO prompts (id, session_id, parent_id, text)
-            VALUES (%s, %s, %s, %s)
-            """,
-            (prompt_id, session_id, parent_id, text)
-        )
-        return prompt_id
+    Args:
+        session_id:   Parent session ID.
+        job_id:       Parent job ID.
+        prompt_index: Position within the job (0, 1, 2...).
+        text:         Full prompt text sent to the image model.
+        local_path:   Absolute path to image on Desktop (dev mode).
+        parent_id:    ID of the prompt this was iterated from (None = root).
+        image_url:    Public URL (S3/MinIO) — empty in local dev.
+        image_s3_key: S3 key — empty in local dev.
 
-    def update_image(self, prompt_id: str, image_url: str, image_s3_key: str):
-        """Set image URL and S3 key once generation completes."""
-        self.execute(
-            "UPDATE prompts SET image_url = %s, image_s3_key = %s WHERE id = %s",
-            (image_url, image_s3_key, prompt_id)
-        )
+    Returns:
+        The created prompt row as a dict.
+    """
+    sql = """
+        INSERT INTO prompts
+            (session_id, job_id, parent_id, prompt_index,
+             text, image_url, image_s3_key, local_path)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id, session_id, job_id, parent_id, prompt_index,
+                  text, image_url, image_s3_key, local_path, created_at;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (
+                session_id, job_id, parent_id, prompt_index,
+                text, image_url, image_s3_key, local_path,
+            ))
+            return dict(cur.fetchone())
 
-    def set_rating(self, prompt_id: str, rating: int):
-        """Rate a prompt 1–5."""
-        self.execute(
-            "UPDATE prompts SET rating = %s WHERE id = %s",
-            (rating, prompt_id)
-        )
 
-    def set_favorite(self, prompt_id: str, value: bool):
-        self.execute(
-            "UPDATE prompts SET is_favorite = %s WHERE id = %s",
-            (1 if value else 0, prompt_id)
-        )
+# ─── Read ─────────────────────────────────────────────────────────────────────
 
-    def set_pinned(self, prompt_id: str, value: bool):
-        """Pinned prompts are excluded from S3 expiry lifecycle."""
-        self.execute(
-            "UPDATE prompts SET is_pinned = %s WHERE id = %s",
-            (1 if value else 0, prompt_id)
-        )
+def get_prompt(prompt_id: str) -> dict[str, Any] | None:
+    """Fetch a single prompt row by ID."""
+    sql = """
+        SELECT id, session_id, job_id, parent_id, prompt_index,
+               text, image_url, image_s3_key, local_path, created_at
+        FROM prompts
+        WHERE id = %s;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (prompt_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
 
-    # ── Read: single prompt ────────────────────────────────────────
 
-    def get_by_id(self, prompt_id: str):
-        return self.fetchone(
-            "SELECT * FROM prompts WHERE id = %s",
-            (prompt_id,)
-        )
+def list_prompts_for_job(job_id: str) -> list[dict[str, Any]]:
+    """
+    Return all prompts for a job ordered by prompt_index.
+    Used to display images for a single generation.
+    """
+    sql = """
+        SELECT id, session_id, job_id, parent_id, prompt_index,
+               text, image_url, image_s3_key, local_path, created_at
+        FROM prompts
+        WHERE job_id = %s
+        ORDER BY prompt_index ASC;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (job_id,))
+            return [dict(r) for r in cur.fetchall()]
 
-    def get_by_id_and_user(self, prompt_id: str, user_id: str):
-        """Ownership-safe fetch — joins back to sessions to verify user."""
-        return self.fetchone(
-            """
-            SELECT p.* FROM prompts p
-            JOIN sessions s ON p.session_id = s.id
-            WHERE p.id = %s AND s.user_id = %s
-            """,
-            (prompt_id, user_id)
-        )
 
-    # ── Read: session level ────────────────────────────────────────
+def list_prompts_for_session(session_id: str) -> list[dict[str, Any]]:
+    """
+    Return ALL prompts for a session ordered by creation time.
+    Used to build the full generation tree for a chat.
+    """
+    sql = """
+        SELECT id, session_id, job_id, parent_id, prompt_index,
+               text, image_url, image_s3_key, local_path, created_at
+        FROM prompts
+        WHERE session_id = %s
+        ORDER BY created_at ASC;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (session_id,))
+            return [dict(r) for r in cur.fetchall()]
 
-    def get_by_session(self, session_id: str):
-        """All prompts in a session, oldest first."""
-        return self.fetchall(
-            "SELECT * FROM prompts WHERE session_id = %s ORDER BY created_at ASC",
-            (session_id,)
-        )
 
-    def get_roots_by_session(self, session_id: str):
-        """Only the original 5 root prompts (no parent)."""
-        return self.fetchall(
-            """
-            SELECT * FROM prompts
-            WHERE session_id = %s AND parent_id IS NULL
-            ORDER BY created_at ASC
-            """,
-            (session_id,)
-        )
+def get_generation_tree(session_id: str) -> list[dict[str, Any]]:
+    """
+    Build the full generation tree for a session.
 
-    def get_children(self, parent_id: str):
-        """Direct children of a prompt — one level of iteration."""
-        return self.fetchall(
-            "SELECT * FROM prompts WHERE parent_id = %s ORDER BY created_at ASC",
-            (parent_id,)
-        )
+    Returns jobs in order, each with their prompts/images nested inside.
 
-    # ── Read: generation tree ──────────────────────────────────────
+    Shape:
+    [
+        {
+            "job_id":     str,
+            "brief_text": str,
+            "status":     str,
+            "created_at": str,
+            "prompts": [
+                {
+                    "id":           str,
+                    "parent_id":    str | None,
+                    "prompt_index": int,
+                    "text":         str,
+                    "image_url":    str,
+                    "local_path":   str,
+                    "created_at":   str,
+                },
+                ...
+            ]
+        },
+        ...
+    ]
+    """
+    # Fetch all jobs for this session in order
+    jobs_sql = """
+        SELECT id, brief_text, input_type, status, created_at
+        FROM jobs
+        WHERE session_id = %s
+        ORDER BY created_at ASC;
+    """
+    # Fetch all prompts for this session in order
+    prompts_sql = """
+        SELECT id, job_id, parent_id, prompt_index,
+               text, image_url, image_s3_key, local_path, created_at
+        FROM prompts
+        WHERE session_id = %s
+        ORDER BY created_at ASC;
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(jobs_sql, (session_id,))
+            jobs = [dict(r) for r in cur.fetchall()]
 
-    def get_ancestors(self, prompt_id: str):
-        """
-        Walk UP the tree from prompt_id to the root.
-        Returns the full ancestry chain oldest-first.
-        Used to build context for the reasoning model on iteration.
-        """
-        return self.fetchall(
-            """
-            WITH RECURSIVE ancestors AS (
-                SELECT * FROM prompts WHERE id = %s
-                UNION ALL
-                SELECT p.* FROM prompts p
-                JOIN ancestors a ON p.id = a.parent_id
-            )
-            SELECT * FROM ancestors ORDER BY created_at ASC
-            """,
-            (prompt_id,)
-        )
+            cur.execute(prompts_sql, (session_id,))
+            all_prompts = [dict(r) for r in cur.fetchall()]
 
-    def get_descendants(self, prompt_id: str):
-        """
-        Walk DOWN the tree from prompt_id.
-        Returns all iterations ever made from this prompt.
-        """
-        return self.fetchall(
-            """
-            WITH RECURSIVE descendants AS (
-                SELECT * FROM prompts WHERE id = %s
-                UNION ALL
-                SELECT p.* FROM prompts p
-                JOIN descendants d ON p.parent_id = d.id
-            )
-            SELECT * FROM descendants ORDER BY created_at ASC
-            """,
-            (prompt_id,)
-        )
+    # Group prompts under their job
+    prompts_by_job: dict[str, list] = {j["id"]: [] for j in jobs}
+    for p in all_prompts:
+        jid = p["job_id"]
+        if jid in prompts_by_job:
+            prompts_by_job[jid].append(p)
 
-    def get_full_tree_by_session(self, session_id: str):
-        """
-        Entire prompt tree for a session — all roots and all iterations.
-        Frontend uses this to render the iteration history panel.
-        """
-        return self.fetchall(
-            """
-            SELECT
-                p.*,
-                parent.text AS parent_text
-            FROM prompts p
-            LEFT JOIN prompts parent ON p.parent_id = parent.id
-            WHERE p.session_id = %s
-            ORDER BY p.created_at ASC
-            """,
-            (session_id,)
-        )
+    # Build final tree
+    tree = []
+    for job in jobs:
+        tree.append({
+            "job_id":     job["id"],
+            "brief_text": job["brief_text"],
+            "input_type": job["input_type"],
+            "status":     job["status"],
+            "created_at": job["created_at"].isoformat() if hasattr(job["created_at"], "isoformat") else str(job["created_at"]),
+            "prompts":    [
+                {
+                    **p,
+                    "created_at": p["created_at"].isoformat() if hasattr(p["created_at"], "isoformat") else str(p["created_at"]),
+                }
+                for p in prompts_by_job[job["id"]]
+            ],
+        })
 
-    # ── Read: user level ───────────────────────────────────────────
-
-    def get_favorites_by_user(self, user_id: str):
-        """All favorited images across all sessions for a user."""
-        return self.fetchall(
-            """
-            SELECT p.*, b.content AS brief_content
-            FROM prompts p
-            JOIN sessions s ON p.session_id = s.id
-            JOIN briefs   b ON s.brief_id   = b.id
-            WHERE s.user_id = %s AND p.is_favorite = 1
-            ORDER BY p.created_at DESC
-            """,
-            (user_id,)
-        )
-
-    def get_pinned_by_user(self, user_id: str):
-        """All pinned (permanent) images for a user."""
-        return self.fetchall(
-            """
-            SELECT p.*, b.content AS brief_content
-            FROM prompts p
-            JOIN sessions s ON p.session_id = s.id
-            JOIN briefs   b ON s.brief_id   = b.id
-            WHERE s.user_id = %s AND p.is_pinned = 1
-            ORDER BY p.created_at DESC
-            """,
-            (user_id,)
-        )
-
-    def get_top_rated_by_user(self, user_id: str, min_rating: int = 4):
-        """All prompts rated at or above a threshold for a user."""
-        return self.fetchall(
-            """
-            SELECT p.*, b.content AS brief_content
-            FROM prompts p
-            JOIN sessions s ON p.session_id = s.id
-            JOIN briefs   b ON s.brief_id   = b.id
-            WHERE s.user_id = %s AND p.rating >= %s
-            ORDER BY p.rating DESC, p.created_at DESC
-            """,
-            (user_id, min_rating)
-        )
-
-    def get_images_pending_upload(self):
-        """Prompts that have been created but image not yet uploaded — for retry logic."""
-        return self.fetchall(
-            "SELECT * FROM prompts WHERE image_url IS NULL ORDER BY created_at ASC"
-        )
-
-    def count_by_session(self, session_id: str) -> int:
-        row = self.fetchone(
-            "SELECT COUNT(*) AS cnt FROM prompts WHERE session_id = %s",
-            (session_id,)
-        )
-        return row["cnt"] if row else 0
+    return tree
