@@ -1,0 +1,52 @@
+{
+  "chat_id": "dev-615bb20b",
+  "created_at": "2026-06-08T07:44:31.678496+00:00",
+  "updated_at": "2026-06-08T07:45:19.463887+00:00",
+  "raw_input": "hey so the client wants something for their Air Max launch, summer vibes basically, energetic you know? orange is their brand color, keep it feeling young and urban. oh and they mentioned something about movement being the theme  Client is wants to change the background image which is young and energetic to generate more sales. You can do something like  - Idea 1: The Drop Moment related image and Idea 2: The Court to Street related image \nadd text on image as headline - Mega Sale\nadd sub heading - sales\nbelow add text - pricing starting from $200 \nCTA - order now",
+  "input_type": "text",
+  "elements": [
+    {
+      "value": "hey so the client wants something for their Air Max launch, summer vibes basically, energetic you know? orange is their brand color, keep it feeling young and urban. oh and they mentioned something about movement being the theme"
+    },
+    {
+      "value": "Client is wants to change the background image which is young and energetic to generate more sales."
+    },
+    {
+      "key": "you can do something like  - idea 1",
+      "value": "The Drop Moment related image and Idea 2: The Court to Street related image"
+    },
+    {
+      "value": "add text on image as headline - Mega Sale"
+    },
+    {
+      "value": "add sub heading - sales"
+    },
+    {
+      "value": "below add text - pricing starting from $200"
+    },
+    {
+      "value": "CTA - order now"
+    }
+  ],
+  "tags": [],
+  "prompts": [
+    "Dynamic product photography of Nike Air Max sneakers suspended in mid-air against vibrant orange gradient background, explosive energy burst effect with motion blur particles, sneakers captured at the exact moment of release creating 'the drop' feeling, urban street style aesthetic, summer sunset lighting with warm golden hour glow, energetic youthful composition, floating orange and yellow geometric shapes, dynamic diagonal composition suggesting movement and momentum, bold headline text 'Mega Sale' in modern sans-serif font at top center, subheading 'sales' positioned directly below headline, price text 'pricing starting from $200' in mid-lower area, CTA button 'order now' at bottom center, high-energy urban photography style, professional product shot, 8k quality, sharp focus on sneakers, vibrant orange brand color dominant throughout, summer vibes, street culture aesthetic, Gen Z appeal, movement theme emphasized through dynamic floating composition | negative: static pose, boring composition, winter colors, cold tones, blue colors, green colors, corporate style, formal setting, indoor studio, plain background, no energy, lifeless, dull lighting, blurry product, low quality, amateur photography, cluttered, busy background, multiple products, people in frame, text errors, misspelled words",
+    "Urban basketball court transitioning into city street scene, Nike Air Max sneakers prominently featured in foreground with motion trails, vibrant orange basketball court lines and street markings creating dynamic pathways, summer golden hour lighting casting long energetic shadows, young urban aesthetic with graffiti art elements in orange tones, movement theme shown through blurred background of people in motion, energetic composition with diagonal leading lines from court to street, warm sunset orange sky gradient, street culture meets sports lifestyle, bold headline text 'Mega Sale' positioned in upper third area, subheading 'sales' directly beneath headline, price text 'pricing starting from $200' in middle-lower section, CTA 'order now' at bottom center, high-energy lifestyle photography, urban youth culture, summer vibes with warm orange color palette as brand identity, dynamic perspective suggesting forward movement and transition, professional commercial photography, 8k quality, sharp product focus, Gen Z target audience appeal, street style aesthetic | negative: winter scene, cold colors, blue tones, static composition, no movement, boring angle, indoor setting, studio lighting, corporate style, formal atmosphere, empty scene, no energy, dull colors, low quality, blurry, amateur photo, cluttered composition, multiple competing focal points, people's faces visible, text placement errors, wrong text content"
+  ],
+  "images": [
+    {
+      "prompt_index": 0,
+      "prompt": "Dynamic product photography of Nike Air Max sneakers suspended in mid-air against vibrant orange gradient background, explosive energy burst effect with motion blur particles, sneakers captured at the exact moment of release creating 'the drop' feeling, urban street style aesthetic, summer sunset lighting with warm golden hour glow, energetic youthful composition, floating orange and yellow geometric shapes, dynamic diagonal composition suggesting movement and momentum, bold headline text 'Mega Sale' in modern sans-serif font at top center, subheading 'sales' positioned directly below headline, price text 'pricing starting from $200' in mid-lower area, CTA button 'order now' at bottom center, high-energy urban photography style, professional product shot, 8k quality, sharp focus on sneakers, vibrant orange brand color dominant throughout, summer vibes, street culture aesthetic, Gen Z appeal, movement theme emphasized through dynamic floating composition | negative: static pose, boring composition, winter colors, cold tones, blue colors, green colors, corporate style, formal setting, indoor studio, plain background, no energy, lifeless, dull lighting, blurry product, low quality, amateur photography, cluttered, busy background, multiple products, people in frame, text errors, misspelled words",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-615bb20b/prompt_0.png"
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Urban basketball court transitioning into city street scene, Nike Air Max sneakers prominently featured in foreground with motion trails, vibrant orange basketball court lines and street markings creating dynamic pathways, summer golden hour lighting casting long energetic shadows, young urban aesthetic with graffiti art elements in orange tones, movement theme shown through blurred background of people in motion, energetic composition with diagonal leading lines from court to street, warm sunset orange sky gradient, street culture meets sports lifestyle, bold headline text 'Mega Sale' positioned in upper third area, subheading 'sales' directly beneath headline, price text 'pricing starting from $200' in middle-lower section, CTA 'order now' at bottom center, high-energy lifestyle photography, urban youth culture, summer vibes with warm orange color palette as brand identity, dynamic perspective suggesting forward movement and transition, professional commercial photography, 8k quality, sharp product focus, Gen Z target audience appeal, street style aesthetic | negative: winter scene, cold colors, blue tones, static composition, no movement, boring angle, indoor setting, studio lighting, corporate style, formal atmosphere, empty scene, no energy, dull colors, low quality, blurry, amateur photo, cluttered composition, multiple competing focal points, people's faces visible, text placement errors, wrong text content",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-615bb20b/prompt_1.png"
+    }
+  ]
+}

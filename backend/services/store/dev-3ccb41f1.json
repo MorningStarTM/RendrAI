@@ -1,0 +1,39 @@
+{
+  "chat_id": "dev-3ccb41f1",
+  "created_at": "2026-06-08T07:22:55.487229+00:00",
+  "updated_at": "2026-06-08T07:23:32.894136+00:00",
+  "raw_input": "hey so the client wants something for their Air Max launch, summer vibes basically, energetic you know? orange is their brand color, keep it feeling young and urban. oh and they mentioned something about movement being the theme  Client is wants to change the background image which is young and energetic to generate more sales. You can do something like  - Idea 1: The Drop Moment related image and Idea 2: The Court to Street related image \nadd text on image as headline - Mega Sale\nadd sub heading - sales\nbelow add text - pricing starting from $200 \nCTA - order now",
+  "input_type": "text",
+  "elements": [
+    {
+      "value": "hey so the client wants something for their Air Max launch, summer vibes basically, energetic you know? orange is their brand color, keep it feeling young and urban. oh and they mentioned something about movement being the theme"
+    },
+    {
+      "value": "Client is wants to change the background image which is young and energetic to generate more sales."
+    },
+    {
+      "key": "you can do something like  - idea 1",
+      "value": "The Drop Moment related image and Idea 2: The Court to Street related image"
+    },
+    {
+      "value": "add text on image as headline - Mega Sale"
+    },
+    {
+      "value": "add sub heading - sales"
+    },
+    {
+      "value": "below add text - pricing starting from $200"
+    },
+    {
+      "value": "CTA - order now"
+    }
+  ],
+  "tags": [],
+  "prompts": [
+    "The Drop Moment - Air Max Sneaker Launch",
+    "Dynamic product photography of Nike Air Max sneakers suspended in mid-air against vibrant orange gradient background, summer energy, sneakers captured at the exact moment of release creating motion blur trails, urban street style aesthetic, dramatic side lighting creating sharp shadows, energetic composition with diagonal movement lines, bokeh particles suggesting speed and energy, hyper-realistic product detail, commercial photography quality, vibrant color palette dominated by orange (#FF6B35) with accents of white and black, youthful and bold mood, shot with shallow depth of field, professional studio lighting with rim lights, 8K resolution, advertising campaign style, clean negative space for text overlay in upper third and lower third areas",
+    "static pose, dull colors, cluttered composition, low quality, blurry product details, dark moody lighting, muted tones, vintage filter, people in frame, hands holding product, indoor domestic setting, busy background, text already on image, watermarks, logos",
+    "Dynamic product photography of Nike Air Max sneakers suspended in mid-air against vibrant orange gradient background, summer energy, sneakers captured at the exact moment of release creating motion blur trails, urban street style aesthetic, dramatic side lighting creating sharp shadows, energetic composition with diagonal movement lines, bokeh particles suggesting speed and energy, hyper-realistic product detail, commercial photography quality, vibrant color palette dominated by orange (#FF6B35) with accents of white and black, youthful and bold mood, shot with shallow depth of field, professional studio lighting with rim lights, 8K resolution, advertising campaign style, clean negative space for text overlay in upper third and lower third areas | negative: static pose, dull colors, cluttered composition, low quality, blurry product details, dark moody lighting, muted tones, vintage filter, people in frame, hands holding product, indoor domestic setting, busy background, text already on image, watermarks, logos"
+  ],
+  "images": []
+}

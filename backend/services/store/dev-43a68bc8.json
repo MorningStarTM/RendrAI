@@ -1,0 +1,68 @@
+{
+  "chat_id": "dev-43a68bc8",
+  "created_at": "2026-06-08T07:36:11.159284+00:00",
+  "updated_at": "2026-06-08T07:37:19.334116+00:00",
+  "raw_input": "hey so the client wants something for their Air Max launch, summer vibes basically, energetic you know? orange is their brand color, keep it feeling young and urban. oh and they mentioned something about movement being the theme  Client is wants to change the background image which is young and energetic to generate more sales. You can do something like  - Idea 1: The Drop Moment related image and Idea 2: The Court to Street related image \nadd text on image as headline - Mega Sale\nadd sub heading - sales\nbelow add text - pricing starting from $200 \nCTA - order now",
+  "input_type": "text",
+  "elements": [
+    {
+      "value": "hey so the client wants something for their Air Max launch, summer vibes basically, energetic you know? orange is their brand color, keep it feeling young and urban. oh and they mentioned something about movement being the theme"
+    },
+    {
+      "value": "Client is wants to change the background image which is young and energetic to generate more sales."
+    },
+    {
+      "key": "you can do something like  - idea 1",
+      "value": "The Drop Moment related image and Idea 2: The Court to Street related image"
+    },
+    {
+      "value": "add text on image as headline - Mega Sale"
+    },
+    {
+      "value": "add sub heading - sales"
+    },
+    {
+      "value": "below add text - pricing starting from $200"
+    },
+    {
+      "value": "CTA - order now"
+    }
+  ],
+  "tags": [],
+  "prompts": [
+    "Dynamic product photography of Nike Air Max sneakers suspended mid-air with explosive orange powder burst, summer energy aesthetic, vibrant orange brand color dominating the composition, sneakers frozen in motion with dramatic lighting, urban street photography style, high-energy youth culture vibe, particles and dust creating movement trails, studio lighting with strong rim lights, shallow depth of field, Nike swoosh clearly visible, clean white and orange color palette with concrete gray accents, professional commercial photography, shot on Sony A7IV 85mm f/1.4, ultra sharp focus on product, energetic and bold mood, space for text overlay at top and bottom thirds, 8K resolution, hyperrealistic details, advertising campaign quality | negative: blurry, low quality, cluttered background, dark moody lighting, muted colors, static composition, boring angle, amateur photography, watermarks, text already on image, people in frame, multiple products, busy patterns, vintage filter, soft focus, underexposed, overexposed",
+    "Aerial view of fresh Nike Air Max sneakers landing on vibrant orange painted basketball court, summer golden hour lighting, dynamic motion blur effect, urban youth culture aesthetic, bold orange and white color scheme, geometric court lines creating strong composition, sneakers captured at moment of impact with slight motion trails, contemporary street style photography, energetic and fresh mood, clean minimalist composition with negative space for text, shot from directly above, professional advertising photography, crisp shadows, high contrast, modern athletic lifestyle vibe, Gen-Z appeal, 8K ultra HD, commercial campaign quality, space reserved at top for headline text | negative: people visible, crowded scene, dull colors, nighttime, indoor setting, multiple shoes, cluttered composition, vintage aesthetic, low resolution, grainy, dark shadows, text present, logos other than Nike, busy background, distorted perspective, blurry details",
+    "Wide angle shot of outdoor urban basketball court with vibrant orange painted surface, Nike Air Max sneakers prominently displayed in foreground, summer afternoon natural lighting, city skyline blurred in background, street style aesthetic, energetic youth culture vibe, bold orange brand color throughout, dynamic low angle perspective, concrete and asphalt textures, modern athletic lifestyle photography, clean composition with geometric court lines, fresh and contemporary mood, professional commercial quality, shot on Canon R5 24mm f/2.8, sharp product focus with environmental context, urban energy, space for text overlay in upper third, 8K resolution, advertising campaign style, movement suggested through composition | negative: people in frame, nighttime, indoor court, cluttered background, multiple products, dark moody lighting, vintage filter, low quality, blurry, busy patterns, text already present, other brand logos, dull colors, static boring composition, amateur photography, overcast weather, dirty or worn surfaces",
+    "Dynamic motion photography of Nike Air Max sneakers in action on orange urban basketball court transitioning to city street, intentional motion blur suggesting speed and movement, summer vibrant lighting, energetic youth aesthetic, bold orange and white color palette, street photography style meets commercial product shot, contemporary urban culture vibe, high-energy composition, clean modern look with geometric elements, professional advertising quality, panning shot technique, Nike branding clearly visible, fresh summer campaign feel, Gen-Z target audience appeal, space for text in top and bottom areas, 8K ultra sharp where needed, commercial photography excellence, athletic lifestyle energy | negative: static image, people visible, cluttered scene, dark lighting, muted colors, vintage aesthetic, multiple shoes, busy background, text overlay present, other brands, low resolution, blurry product, amateur quality, indoor setting, nighttime, overexposed, underexposed, distorted product"
+  ],
+  "images": [
+    {
+      "prompt_index": 0,
+      "prompt": "Dynamic product photography of Nike Air Max sneakers suspended mid-air with explosive orange powder burst, summer energy aesthetic, vibrant orange brand color dominating the composition, sneakers frozen in motion with dramatic lighting, urban street photography style, high-energy youth culture vibe, particles and dust creating movement trails, studio lighting with strong rim lights, shallow depth of field, Nike swoosh clearly visible, clean white and orange color palette with concrete gray accents, professional commercial photography, shot on Sony A7IV 85mm f/1.4, ultra sharp focus on product, energetic and bold mood, space for text overlay at top and bottom thirds, 8K resolution, hyperrealistic details, advertising campaign quality | negative: blurry, low quality, cluttered background, dark moody lighting, muted colors, static composition, boring angle, amateur photography, watermarks, text already on image, people in frame, multiple products, busy patterns, vintage filter, soft focus, underexposed, overexposed",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-43a68bc8/prompt_0.png"
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Aerial view of fresh Nike Air Max sneakers landing on vibrant orange painted basketball court, summer golden hour lighting, dynamic motion blur effect, urban youth culture aesthetic, bold orange and white color scheme, geometric court lines creating strong composition, sneakers captured at moment of impact with slight motion trails, contemporary street style photography, energetic and fresh mood, clean minimalist composition with negative space for text, shot from directly above, professional advertising photography, crisp shadows, high contrast, modern athletic lifestyle vibe, Gen-Z appeal, 8K ultra HD, commercial campaign quality, space reserved at top for headline text | negative: people visible, crowded scene, dull colors, nighttime, indoor setting, multiple shoes, cluttered composition, vintage aesthetic, low resolution, grainy, dark shadows, text present, logos other than Nike, busy background, distorted perspective, blurry details",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-43a68bc8/prompt_1.png"
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "Wide angle shot of outdoor urban basketball court with vibrant orange painted surface, Nike Air Max sneakers prominently displayed in foreground, summer afternoon natural lighting, city skyline blurred in background, street style aesthetic, energetic youth culture vibe, bold orange brand color throughout, dynamic low angle perspective, concrete and asphalt textures, modern athletic lifestyle photography, clean composition with geometric court lines, fresh and contemporary mood, professional commercial quality, shot on Canon R5 24mm f/2.8, sharp product focus with environmental context, urban energy, space for text overlay in upper third, 8K resolution, advertising campaign style, movement suggested through composition | negative: people in frame, nighttime, indoor court, cluttered background, multiple products, dark moody lighting, vintage filter, low quality, blurry, busy patterns, text already present, other brand logos, dull colors, static boring composition, amateur photography, overcast weather, dirty or worn surfaces",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-43a68bc8/prompt_2.png"
+    },
+    {
+      "prompt_index": 3,
+      "prompt": "Dynamic motion photography of Nike Air Max sneakers in action on orange urban basketball court transitioning to city street, intentional motion blur suggesting speed and movement, summer vibrant lighting, energetic youth aesthetic, bold orange and white color palette, street photography style meets commercial product shot, contemporary urban culture vibe, high-energy composition, clean modern look with geometric elements, professional advertising quality, panning shot technique, Nike branding clearly visible, fresh summer campaign feel, Gen-Z target audience appeal, space for text in top and bottom areas, 8K ultra sharp where needed, commercial photography excellence, athletic lifestyle energy | negative: static image, people visible, cluttered scene, dark lighting, muted colors, vintage aesthetic, multiple shoes, busy background, text overlay present, other brands, low resolution, blurry product, amateur quality, indoor setting, nighttime, overexposed, underexposed, distorted product",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-43a68bc8/prompt_3.png"
+    }
+  ]
+}

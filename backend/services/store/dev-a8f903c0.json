@@ -1,0 +1,37 @@
+{
+  "chat_id": "dev-a8f903c0",
+  "created_at": "2026-06-08T05:57:37.085918+00:00",
+  "updated_at": "2026-06-08T05:58:13.733514+00:00",
+  "raw_input": "hey so the client wants something for their Air Max launch, summer vibes basically, energetic you know? orange is their brand color, keep it feeling young and urban. oh and they mentioned something about movement being the theme. add Neek name in image, this is brand name.",
+  "input_type": "csv",
+  "elements": [
+    {
+      "value": "hey so the client wants something for their Air Max launch",
+      "index": 0
+    },
+    {
+      "value": "summer vibes basically",
+      "index": 1
+    },
+    {
+      "value": "energetic you know? orange is their brand color",
+      "index": 2
+    },
+    {
+      "value": "keep it feeling young and urban. oh and they mentioned something about movement being the theme. add Neek name in image",
+      "index": 3
+    },
+    {
+      "value": "this is brand name.",
+      "index": 4
+    }
+  ],
+  "tags": [],
+  "prompts": [
+    "Dynamic product photography of Nike Air Max sneakers in vibrant orange colorway, floating mid-air against urban summer backdrop, golden hour sunlight casting dramatic shadows, energetic composition with motion blur trails, young urban aesthetic, street art murals in background with graffiti textures, warm color palette dominated by orange, amber and sunset tones, shallow depth of field, professional commercial photography, shot on Canon EOS R5, 85mm lens, high-end retouching, crisp details on shoe texture and Air Max bubble, 'Neek' brand name integrated as bold modern typography overlay, summer heat haze effect, ultra sharp, 8K resolution, advertising campaign quality | negative: blurry, low quality, amateur, dark, gloomy, winter, cold colors, static pose, boring composition, cluttered, messy, poor lighting, overexposed, underexposed, distorted proportions, ugly, deformed shoe, pixelated, grainy, watermark, signature, text errors, misspelled brand name",
+    "High-energy lifestyle photography of young urban athlete in mid-jump wearing orange Air Max sneakers, summer city rooftop setting at sunset, dynamic action freeze frame, motion captured with fast shutter speed, vibrant orange and warm yellow color grading, lens flare from setting sun, contemporary streetwear fashion, confident youthful energy, concrete urban textures, blue sky gradient background, professional sports photography style, shot with Sony A1, 24-70mm lens, dramatic perspective from low angle, 'Neek' brand logo prominently displayed on clean modern signage in scene, sharp focus on sneakers, bokeh background, cinematic color correction, magazine cover quality, 4K ultra detailed | negative: static, boring, elderly subjects, formal wear, indoor studio, artificial lighting, dull colors, grey tones, winter clothing, sad mood, low energy, poor composition, centered subject, snapshot quality, noise, compression artifacts, distorted anatomy, unnatural poses, cluttered background",
+    "Bold graphic design composition featuring Air Max sneaker silhouette with explosive orange paint splash and motion trails, summer energy visualized through dynamic flowing ribbons and speed lines, modern minimalist aesthetic with strong geometric shapes, vibrant orange as primary color with accents of coral, yellow and white, clean contemporary typography displaying 'Neek' brand name in sans-serif font, sense of forward momentum and velocity, digital art style mixing 3D rendering with graphic design elements, high contrast lighting, gradient backgrounds transitioning from orange to warm sky blue, professional advertising illustration, vector-sharp edges, studio lighting setup, commercial campaign artwork, ultra high resolution, Behance quality | negative: photorealistic, cluttered, messy, dark palette, muted colors, vintage style, retro, complex details, busy composition, poor typography, illegible text, low contrast, muddy colors, amateur design, pixelated, raster artifacts, watermarks",
+    "Cinematic street photography of diverse young people in motion on vibrant summer city street, multiple subjects wearing orange Air Max sneakers, dynamic composition with diagonal leading lines, golden hour warm lighting creating long shadows, energetic urban atmosphere with basketball court and street art, contemporary youth culture aesthetic, candid documentary style with staged perfection, bright orange color pops throughout scene, modern architecture and palm trees suggesting summer heat, shot on Fujifilm GFX100, 35mm lens, natural film grain texture, 'Neek' brand name visible on street banner and building signage, authentic urban energy, lifestyle advertising photography, editorial magazine quality, rich color saturation, tack sharp focus, 6K resolution | negative: empty streets, isolated subject, winter scene, cold atmosphere, formal setting, corporate environment, studio backdrop, artificial props, oversaturated, HDR artifacts, unnatural colors, stiff poses, stock photo look, poor lighting, underexposed shadows, blown highlights, distorted perspectives, amateur composition"
+  ],
+  "images": []
+}

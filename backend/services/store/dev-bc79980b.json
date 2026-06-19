@@ -1,0 +1,62 @@
+{
+  "chat_id": "dev-bc79980b",
+  "created_at": "2026-06-08T06:13:42.701736+00:00",
+  "updated_at": "2026-06-08T06:14:57.191369+00:00",
+  "raw_input": "hey so the client wants something for their Air Max launch, summer vibes basically, energetic you know? orange is their brand color, keep it feeling young and urban. oh and they mentioned something about movement being the theme  Client is wants to change the background image which is young and energetic to generate more sales. You can do something like  - Idea 1: The Drop Moment related image and Idea 2: The Court to Street related image \n\n",
+  "input_type": "csv",
+  "elements": [
+    {
+      "value": "hey so the client wants something for their Air Max launch",
+      "index": 0
+    },
+    {
+      "value": "summer vibes basically",
+      "index": 1
+    },
+    {
+      "value": "energetic you know? orange is their brand color",
+      "index": 2
+    },
+    {
+      "value": "keep it feeling young and urban. oh and they mentioned something about movement being the theme  Client is wants to change the background image which is young and energetic to generate more sales. You can do something like  - Idea 1: The Drop Moment related image and Idea 2: The Court to Street related image",
+      "index": 3
+    }
+  ],
+  "tags": [],
+  "prompts": [
+    "Dynamic product photography of Nike Air Max sneakers suspended in mid-air against vibrant orange gradient background, explosive energy burst effect with motion blur trails, floating geometric shapes and abstract particles, dramatic rim lighting creating glowing edges, summer sunset color palette with electric orange, coral pink, and warm yellow tones, urban street style aesthetic, high-energy composition with diagonal movement, sharp focus on shoe details with visible Air Max cushioning, professional commercial photography, hyper-realistic rendering, 8K quality, cinematic lighting with strong backlight, youthful and bold atmosphere, modern minimalist design with dynamic action | negative: static pose, dull colors, winter themes, dark moody lighting, cluttered background, blurry product details, low quality, grainy, oversaturated, artificial looking, cheap rendering, flat lighting, boring composition, elderly models, corporate stiff aesthetic, muted tones, grey, brown, sad atmosphere",
+    "Wide-angle urban basketball court scene transitioning into city street, young diverse athletes in motion wearing Air Max sneakers, golden hour summer lighting with warm orange sun flare, concrete court with vibrant orange painted lines and graffiti murals, dynamic action shot capturing mid-jump movement and running stride, energetic composition with leading lines from court to street, shallow depth of field focusing on sneakers, street style fashion with athletic wear, lens flare and sun rays creating dreamy atmosphere, photojournalistic style with authentic urban energy, rich color grading emphasizing orange brand color with complementary blues and teals, high contrast, sharp details, professional sports photography, 4K cinematic quality, youthful rebellion and freedom theme, summer heat haze effect | negative: indoor studio, artificial backgrounds, static standing poses, formal attire, empty lifeless scene, cold winter setting, dark gloomy atmosphere, no people, sterile environment, corporate office aesthetic, muted desaturated colors, low energy, boring symmetrical composition, blurry motion, poor lighting, amateur photography, green or purple color schemes",
+    "Close-up hero shot of Air Max sneaker in explosive orange paint splash, frozen motion capture with liquid dynamics, vibrant summer color explosion with orange, yellow, and coral paint droplets suspended in air, dramatic studio lighting with multiple colored gels creating orange rim light, black seamless background for maximum contrast, hyper-detailed product photography showing texture and materials, energetic radial composition with paint bursting outward, professional commercial quality, octane render realism, 8K resolution, sharp focus on Nike swoosh and Air Max branding, youthful rebellious energy, dynamic movement frozen in time, glossy reflective surfaces, high-speed photography aesthetic, bold and confident mood, summer heat and intensity visualized | negative: boring flat lay, no movement, dull grey background, poor lighting, blurry details, low resolution, muddy colors, winter themes, calm peaceful mood, minimalist empty composition, washed out colors, dark shadows, amateur product photo, cluttered messy background, unnatural CGI look, oversaturated neon",
+    "Dynamic lifestyle photography of young Gen-Z runner in motion through vibrant urban environment, Air Max sneakers prominently featured in sharp focus, motion blur background showing colorful street art murals with dominant orange tones, summer afternoon golden light creating long shadows, energetic diagonal composition with subject moving through frame, street style outfit with athletic wear, authentic candid moment captured mid-stride, shallow depth of field isolating subject, warm color palette with orange, peach, and sunset hues, urban concrete textures and graffiti details, high-energy youthful atmosphere, professional editorial photography style, natural film grain texture, 35mm lens aesthetic, sun flare and lens artifacts, freedom and movement theme, summer heat shimmer effect, diverse urban culture representation | negative: studio background, posed stiff portrait, no movement, indoor setting, winter clothing, dark moody colors, elderly subject, corporate business attire, static composition, centered symmetrical framing, artificial studio lighting, cold color temperature, boring suburban setting, low energy, formal professional mood, cluttered distracting background, poor focus, overexposed, underexposed"
+  ],
+  "images": [
+    {
+      "prompt_index": 0,
+      "prompt": "Dynamic product photography of Nike Air Max sneakers suspended in mid-air against vibrant orange gradient background, explosive energy burst effect with motion blur trails, floating geometric shapes and abstract particles, dramatic rim lighting creating glowing edges, summer sunset color palette with electric orange, coral pink, and warm yellow tones, urban street style aesthetic, high-energy composition with diagonal movement, sharp focus on shoe details with visible Air Max cushioning, professional commercial photography, hyper-realistic rendering, 8K quality, cinematic lighting with strong backlight, youthful and bold atmosphere, modern minimalist design with dynamic action | negative: static pose, dull colors, winter themes, dark moody lighting, cluttered background, blurry product details, low quality, grainy, oversaturated, artificial looking, cheap rendering, flat lighting, boring composition, elderly models, corporate stiff aesthetic, muted tones, grey, brown, sad atmosphere",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-bc79980b/prompt_0.png"
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Wide-angle urban basketball court scene transitioning into city street, young diverse athletes in motion wearing Air Max sneakers, golden hour summer lighting with warm orange sun flare, concrete court with vibrant orange painted lines and graffiti murals, dynamic action shot capturing mid-jump movement and running stride, energetic composition with leading lines from court to street, shallow depth of field focusing on sneakers, street style fashion with athletic wear, lens flare and sun rays creating dreamy atmosphere, photojournalistic style with authentic urban energy, rich color grading emphasizing orange brand color with complementary blues and teals, high contrast, sharp details, professional sports photography, 4K cinematic quality, youthful rebellion and freedom theme, summer heat haze effect | negative: indoor studio, artificial backgrounds, static standing poses, formal attire, empty lifeless scene, cold winter setting, dark gloomy atmosphere, no people, sterile environment, corporate office aesthetic, muted desaturated colors, low energy, boring symmetrical composition, blurry motion, poor lighting, amateur photography, green or purple color schemes",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-bc79980b/prompt_1.png"
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "Close-up hero shot of Air Max sneaker in explosive orange paint splash, frozen motion capture with liquid dynamics, vibrant summer color explosion with orange, yellow, and coral paint droplets suspended in air, dramatic studio lighting with multiple colored gels creating orange rim light, black seamless background for maximum contrast, hyper-detailed product photography showing texture and materials, energetic radial composition with paint bursting outward, professional commercial quality, octane render realism, 8K resolution, sharp focus on Nike swoosh and Air Max branding, youthful rebellious energy, dynamic movement frozen in time, glossy reflective surfaces, high-speed photography aesthetic, bold and confident mood, summer heat and intensity visualized | negative: boring flat lay, no movement, dull grey background, poor lighting, blurry details, low resolution, muddy colors, winter themes, calm peaceful mood, minimalist empty composition, washed out colors, dark shadows, amateur product photo, cluttered messy background, unnatural CGI look, oversaturated neon",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-bc79980b/prompt_2.png"
+    },
+    {
+      "prompt_index": 3,
+      "prompt": "Dynamic lifestyle photography of young Gen-Z runner in motion through vibrant urban environment, Air Max sneakers prominently featured in sharp focus, motion blur background showing colorful street art murals with dominant orange tones, summer afternoon golden light creating long shadows, energetic diagonal composition with subject moving through frame, street style outfit with athletic wear, authentic candid moment captured mid-stride, shallow depth of field isolating subject, warm color palette with orange, peach, and sunset hues, urban concrete textures and graffiti details, high-energy youthful atmosphere, professional editorial photography style, natural film grain texture, 35mm lens aesthetic, sun flare and lens artifacts, freedom and movement theme, summer heat shimmer effect, diverse urban culture representation | negative: studio background, posed stiff portrait, no movement, indoor setting, winter clothing, dark moody colors, elderly subject, corporate business attire, static composition, centered symmetrical framing, artificial studio lighting, cold color temperature, boring suburban setting, low energy, formal professional mood, cluttered distracting background, poor focus, overexposed, underexposed",
+      "image_url": "",
+      "s3_key": "",
+      "local_path": "/Users/dulanbamunuge/Desktop/rendr_ai_output/dev-bc79980b/prompt_3.png"
+    }
+  ]
+}
